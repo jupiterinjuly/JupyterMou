@@ -7,7 +7,6 @@ import '@/styles/notion.css' //  重写部分notion样式
 import 'react-notion-x/src/styles.css' // 原版的react-notion-x
 
 import useAdjustStyle from '@/hooks/useAdjustStyle'
-import { Analytics } from "@vercel/analytics/next";
 import { GlobalContextProvider } from '@/lib/global'
 import { getBaseLayoutByTheme } from '@/themes/theme'
 import { useRouter } from 'next/router'
@@ -70,17 +69,7 @@ const MyApp = ({ Component, pageProps }) => {
         content
       )}
     </>
-
   )
-  // return (
-  //   <GlobalContextProvider {...pageProps}>
-  //     <Layout>
-  //       {clerkWrapper(<Component {...pageProps} />)}
-  //     </Layout>
-  //     <Analytics />
-  //     <ExternalPlugins />
-  //   </GlobalContextProvider>
-  // )
 }
 
 export default MyApp
