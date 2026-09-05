@@ -116,15 +116,14 @@ const NotionPage = ({ post, className }) => {
     return () => clearTimeout(timer)
   }, [post])
 
-  // const cleanBlockMap = cleanBlocksWithWarn(post?.blockMap);
-  // console.log('NotionPage render with post:', post);
+  const cleanBlockMap = normalizeRecordMap(post?.blockMap)
 
   return (
     <div
       id='notion-article'
       className={`mx-auto overflow-hidden ${className || ''}`}>
       <NotionRenderer
-        recordMap={          post?.blockMap            ? {                ...post.blockMap,                block: Object.fromEntries(                  Object.entries(post.blockMap.block || {}).filter(                    ([, item]) => item?.value?.id                  )                )              }            : post?.blockMap        }
+        recordMap={cleanBlockMap}
         mapPageUrl={mapPageUrl}
         mapImageUrl={mapImgUrl}
         components={{
@@ -143,6 +142,37 @@ const NotionPage = ({ post, className }) => {
   )
 }
 
+/**
+ * 兼容新版 Notion API 的双层 value 包装，并丢弃无权限占位块。
+ */
+const normalizeRecordMap = recordMap => {
+  if (!recordMap?.block) return recordMap
+
+  const block = Object.fromEntries(
+    Object.entries(recordMap.block)
+      .map(([id, item]) => {
+        const value = item?.value?.id
+          ? item.value
+          : item?.value?.value?.id
+            ? item.value.value
+            : null
+
+        if (!value) return null
+
+        return [
+          id,
+          {
+            ...item,
+            role: item.role || item?.value?.role,
+            value
+          }
+        ]
+      })
+      .filter(Boolean)
+  )
+
+  return { ...recordMap, block }
+}
 
 /**
  * 页面的数据库链接禁止跳转，只能查看
