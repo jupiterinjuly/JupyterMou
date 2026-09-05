@@ -124,7 +124,7 @@ const NotionPage = ({ post, className }) => {
       id='notion-article'
       className={`mx-auto overflow-hidden ${className || ''}`}>
       <NotionRenderer
-        recordMap={post?.blockMap}
+        recordMap={          post?.blockMap            ? {                ...post.blockMap,                block: Object.fromEntries(                  Object.entries(post.blockMap.block || {}).filter(                    ([, item]) => item?.value?.id                  )                )              }            : post?.blockMap        }
         mapPageUrl={mapPageUrl}
         mapImageUrl={mapImgUrl}
         components={{
