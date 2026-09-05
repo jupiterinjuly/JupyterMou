@@ -66,7 +66,7 @@ export default function LazyImage({
 
   useEffect(() => {
     const adjustedImageSrc =
-      adjustImgSize(src, maxWidth) || defaultPlaceholderSrc
+      adjustImgSize(normalizeNotionFileUrl(src), maxWidth) || defaultPlaceholderSrc
 
     // 如果是优先级图片，直接加载
     if (priority) {
@@ -166,11 +166,40 @@ export default function LazyImage({
       {/* 预加载 */}
       {priority && (
         <Head>
-          <link rel='preload' as='image' href={adjustImgSize(src, maxWidth)} />
+          <link
+            rel='preload'
+            as='image'
+            href={adjustImgSize(normalizeNotionFileUrl(src), maxWidth)}
+          />
         </Head>
       )}
     </>
   )
+}
+
+/**
+ * 将 Notion 配置表中的临时 file.notion.so 地址转换为可长期解析的图片代理地址。
+ */
+const normalizeNotionFileUrl = src => {
+  if (!src?.startsWith('https://file.notion.so/')) return src
+
+  try {
+    const url = new URL(src)
+    const pathParts = url.pathname.split('/').filter(Boolean)
+    const fileId = pathParts[3]
+    const fileName = decodeURIComponent(pathParts.slice(4).join('/'))
+    const recordId = url.searchParams.get('id')
+    const table = url.searchParams.get('table') || 'block'
+
+    if (!fileId || !fileName || !recordId) return src
+
+    const attachment = encodeURIComponent(
+      `attachment:${fileId}:${fileName}`
+    )
+    return `https://www.notion.so/image/${attachment}?table=${encodeURIComponent(table)}&id=${encodeURIComponent(recordId)}`
+  } catch {
+    return src
+  }
 }
 
 /**
