@@ -19,7 +19,7 @@ const BLOG = {
   BIO: process.env.NEXT_PUBLIC_BIO || '西南财经大学 22级金融学（经管国际化创新实验班）｜深圳大学 2026级人工智能', // 作者简介
   LINK: process.env.NEXT_PUBLIC_LINK || 'https://www.jupytermou.cn', // 网站正式地址
   KEYWORDS: process.env.NEXT_PUBLIC_KEYWORD || 'NotionNext, 博客, 牟馨怡, Jupiter, blog', // 网站关键词 英文逗号隔开
-  BLOG_FAVICON: process.env.NEXT_PUBLIC_FAVICON || '/favicon.ico', // 使用 public 中的稳定静态资源，避免 Notion 临时签名链接过期
+  BLOG_FAVICON: process.env.NEXT_PUBLIC_FAVICON || '/favicon.ico?v=20260906', // 使用 public 中的稳定静态资源，并通过版本参数刷新浏览器缓存
   BEI_AN: process.env.NEXT_PUBLIC_BEI_AN || '蜀ICP备2025170376号', // 备案号 闽ICP备XXXXXX
   BEI_AN_LINK: process.env.NEXT_PUBLIC_BEI_AN_LINK || 'https://beian.miit.gov.cn/', // 备案查询链接，如果用了萌备等备案请在这里填写
   BEI_AN_GONGAN: process.env.NEXT_PUBLIC_BEI_AN_GONGAN || '川公网安备51010602003010号', // 公安备案号，例如 '浙公网安备3xxxxxxxx8号'
