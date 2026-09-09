@@ -1,5 +1,6 @@
 import { siteConfig } from '@/lib/config'
 import { compressImage, mapImgUrl } from '@/lib/db/notion/mapImage'
+import { normalizeRecordMap } from '@/lib/db/notion/normalizeRecordMap'
 import { isBrowser, loadExternalResource } from '@/lib/utils'
 import mediumZoom from '@fisch0920/medium-zoom'
 import 'katex/dist/katex.min.css'
@@ -140,38 +141,6 @@ const NotionPage = ({ post, className }) => {
       <PrismMac />
     </div>
   )
-}
-
-/**
- * 兼容新版 Notion API 的双层 value 包装，并丢弃无权限占位块。
- */
-const normalizeRecordMap = recordMap => {
-  if (!recordMap?.block) return recordMap
-
-  const block = Object.fromEntries(
-    Object.entries(recordMap.block)
-      .map(([id, item]) => {
-        const value = item?.value?.id
-          ? item.value
-          : item?.value?.value?.id
-            ? item.value.value
-            : null
-
-        if (!value) return null
-
-        return [
-          id,
-          {
-            ...item,
-            role: item.role || item?.value?.role,
-            value
-          }
-        ]
-      })
-      .filter(Boolean)
-  )
-
-  return { ...recordMap, block }
 }
 
 /**
