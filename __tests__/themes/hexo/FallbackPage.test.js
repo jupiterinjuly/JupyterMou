@@ -66,6 +66,10 @@ describe('Hexo fallback page', () => {
     ).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '返回首页' })).toBeInTheDocument()
     expect(screen.getAllByText('第一次建站记录')).toHaveLength(2)
+    expect(screen.getByRole('link', { name: /摄影与世界/ })).toHaveAttribute(
+      'href',
+      '/article/photography-portfolio'
+    )
     expect(screen.getByRole('link', { name: /关于我/ })).toHaveAttribute(
       'href',
       '/about'

@@ -32,7 +32,7 @@ const destinations = [
   {
     label: '摄影与世界',
     detail: '用镜头收藏偶然相遇',
-    href: '/search/摄影',
+    href: '/article/photography-portfolio',
     icon: 'fa-camera-retro'
   }
 ]
