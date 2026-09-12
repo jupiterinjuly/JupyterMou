@@ -1,7 +1,16 @@
-export default function ErrorPage({ statusCode }) {
-  return <div>发生错误，状态码：{statusCode || 404}</div>
+import BLOG from '@/blog.config'
+import { siteConfig } from '@/lib/config'
+import { DynamicLayout } from '@/themes/theme'
+
+export default function ErrorPage(props) {
+  const theme = siteConfig('THEME', BLOG.THEME, props.NOTION_CONFIG)
+  return <DynamicLayout theme={theme} layoutName='Layout404' {...props} />
 }
+
 ErrorPage.getInitialProps = ({ res, err }) => {
   const statusCode = res ? res.statusCode : err ? err.statusCode : 404
-  return { statusCode }
+  return {
+    isFallbackPage: true,
+    statusCode
+  }
 }

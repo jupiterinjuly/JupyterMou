@@ -6,7 +6,11 @@ import { fetchGlobalAllData, resolvePostProps } from '@/lib/db/SiteDataApi'
 import { useGlobal } from '@/lib/global'
 import { getPageTableOfContents } from '@/lib/db/notion/getPageTableOfContents'
 import { getPasswordQuery } from '@/lib/utils/password'
-import { checkSlugHasMorThanTwoSlash, checkSlugHasNoSlash, processPostData } from '@/lib/utils/post'
+import {
+  checkSlugHasMorThanTwoSlash,
+  checkSlugHasNoSlash,
+  processPostData
+} from '@/lib/utils/post'
 import { DynamicLayout } from '@/themes/theme'
 import md5 from 'js-md5'
 import { useRouter } from 'next/router'
@@ -99,7 +103,7 @@ export async function getStaticPaths() {
   if (!BLOG.isProd) {
     return {
       paths: [],
-      fallback: true
+      fallback: 'blocking'
     }
   }
 
@@ -110,24 +114,42 @@ export async function getStaticPaths() {
     .map(row => ({ params: { prefix: row.slug } }))
   return {
     paths: paths,
-    fallback: true
+    fallback: 'blocking'
   }
 }
 
 export async function getStaticProps({ params: { prefix }, locale }) {
+  if (
+    /\.(?:woff2?|ttf|otf|css|js|map|png|jpe?g|gif|svg|webp|ico)$/i.test(prefix)
+  ) {
+    return { notFound: true }
+  }
+
   const props = await resolvePostProps({
     prefix,
-    locale,
+    locale
   })
+  if (!props?.post) {
+    return {
+      notFound: true,
+      revalidate: process.env.EXPORT
+        ? undefined
+        : siteConfig(
+            'NEXT_REVALIDATE_SECOND',
+            BLOG.NEXT_REVALIDATE_SECOND,
+            props.NOTION_CONFIG
+          )
+    }
+  }
   return {
     props,
     revalidate: process.env.EXPORT
       ? undefined
       : siteConfig(
-        'NEXT_REVALIDATE_SECOND',
-        BLOG.NEXT_REVALIDATE_SECOND,
-        props.NOTION_CONFIG
-      )
+          'NEXT_REVALIDATE_SECOND',
+          BLOG.NEXT_REVALIDATE_SECOND,
+          props.NOTION_CONFIG
+        )
   }
 }
 

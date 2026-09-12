@@ -17,7 +17,13 @@ export async function getStaticProps(req) {
   const { locale } = req
 
   const props = (await fetchGlobalAllData({ from: '404', locale })) || {}
-  return { props }
+  return {
+    props: {
+      ...props,
+      isFallbackPage: true,
+      statusCode: 404
+    }
+  }
 }
 
 export default NoFound
