@@ -1,6 +1,7 @@
 import { siteConfig } from '@/lib/config'
 import { useGlobal } from '@/lib/global'
 import { loadExternalResource } from '@/lib/utils'
+import { getCanonicalUrl, isSearchRoute } from '@/lib/utils/seo'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { useEffect } from 'react'
@@ -47,9 +48,19 @@ const SEO = props => {
     keywords = post?.tags?.join(',')
   }
   if (meta) {
-    url = `${url}/${meta.slug}`
+    url = getCanonicalUrl(url, meta.slug)
     image = meta.image || '/bg_image.jpg'
   }
+  const searchPage = isSearchRoute(router.route)
+  const routePath = router.asPath?.split(/[?#]/, 1)[0]
+  const localePrefix =
+    router.locale && router.locale !== router.defaultLocale
+      ? `/${router.locale}`
+      : ''
+  const canonicalUrl =
+    !searchPage && routePath && !routePath.includes('[')
+      ? getCanonicalUrl(LINK, `${localePrefix}${routePath}`)
+      : null
   const TITLE = siteConfig('TITLE')
   const title = meta?.title || TITLE
   const description = meta?.description || `${siteInfo?.description}`
@@ -109,8 +120,13 @@ const SEO = props => {
       />
       <meta
         name='robots'
-        content='follow, index, max-snippet:-1, max-image-preview:large, max-video-preview:-1'
+        content={
+          searchPage
+            ? 'noindex, follow'
+            : 'follow, index, max-snippet:-1, max-image-preview:large, max-video-preview:-1'
+        }
       />
+      {canonicalUrl && <link rel='canonical' href={canonicalUrl} />}
       <meta charSet='UTF-8' />
       <meta name='format-detection' content='telephone=no' />
       <meta name='mobile-web-app-capable' content='yes' />

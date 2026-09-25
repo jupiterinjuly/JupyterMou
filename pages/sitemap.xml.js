@@ -3,6 +3,7 @@ import BLOG from '@/blog.config'
 import { siteConfig } from '@/lib/config'
 import { fetchGlobalAllData } from '@/lib/db/SiteDataApi'
 import { extractLangId, extractLangPrefix } from '@/lib/utils/pageId'
+import { getSitemapPath } from '@/lib/utils/seo'
 import { getServerSideSitemap } from 'next-sitemap'
 
 export const getServerSideProps = async ctx => {
@@ -18,16 +19,12 @@ export const getServerSideProps = async ctx => {
       pageId: id,
       from: 'sitemap.xml'
     })
-    const link = siteConfig(
-      'LINK',
-      siteData?.siteInfo?.link,
-      siteData.NOTION_CONFIG
-    )
+    const link = siteConfig('LINK', BLOG.LINK, siteData.NOTION_CONFIG)
     const localeFields = generateLocalesSitemap(link, siteData.allPages, locale)
     fields = fields.concat(localeFields)
   }
 
-  fields = getUniqueFields(fields);
+  fields = getUniqueFields(fields)
 
   // 缓存
   ctx.res.setHeader(
@@ -73,12 +70,6 @@ function generateLocalesSitemap(link, allPages, locale) {
       priority: '0.7'
     },
     {
-      loc: `${link}${locale}/search`,
-      lastmod: dateNow,
-      changefreq: 'daily',
-      priority: '0.7'
-    },
-    {
       loc: `${link}${locale}/tag`,
       lastmod: dateNow,
       changefreq: 'daily',
@@ -89,32 +80,39 @@ function generateLocalesSitemap(link, allPages, locale) {
     allPages
       ?.filter(p => p.status === BLOG.NOTION_PROPERTY_NAME.status_publish)
       ?.map(post => {
-        const slugWithoutLeadingSlash = post?.slug.startsWith('/')
-          ? post?.slug?.slice(1)
-          : post.slug
+        const sitemapPath = getSitemapPath(post?.slug)
+        if (!sitemapPath) {
+          return null
+        }
         return {
-          loc: `${link}${locale}/${slugWithoutLeadingSlash}`,
+          loc: `${link}${locale}/${sitemapPath}`,
           lastmod: new Date(post?.publishDay).toISOString().split('T')[0],
           changefreq: 'daily',
           priority: '0.7'
         }
-      }) ?? []
+      })
+      ?.filter(Boolean) ?? []
 
   return defaultFields.concat(postFields)
 }
 
 function getUniqueFields(fields) {
-  const uniqueFieldsMap = new Map();
+  const uniqueFieldsMap = new Map()
 
   fields.forEach(field => {
-    const existingField = uniqueFieldsMap.get(field.loc);
+    const existingField = uniqueFieldsMap.get(field.loc)
 
-    if (!existingField || new Date(field.lastmod) > new Date(existingField.lastmod)) {
-      uniqueFieldsMap.set(field.loc, field);
+    if (
+      !existingField ||
+      new Date(field.lastmod) > new Date(existingField.lastmod)
+    ) {
+      uniqueFieldsMap.set(field.loc, field)
     }
-  });
+  })
 
-  return Array.from(uniqueFieldsMap.values());
+  return Array.from(uniqueFieldsMap.values())
 }
 
-export default () => {}
+const Sitemap = () => {}
+
+export default Sitemap
