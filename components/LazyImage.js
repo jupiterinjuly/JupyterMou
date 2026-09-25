@@ -1,118 +1,73 @@
 import { siteConfig } from '@/lib/config'
 import Head from 'next/head'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+
+const DEFAULT_RETRY_COUNT = 2
+const DEFAULT_TIMEOUT_MS = 9000
+const DEFAULT_RETRY_DELAY_MS = 600
 
 /**
- * 图片懒加载
- * @param {*} param0
- * @returns
+ * A lazy image with timeout, automatic retry and a manual retry fallback.
+ * Images are only exposed to the visible <img> while an attempt is active, so
+ * visitors never get stuck with the browser's broken-image icon.
  */
-export default function LazyImage({
-  priority,
-  id,
-  src,
-  alt,
-  placeholderSrc,
-  className,
-  width,
-  height,
-  title,
-  onLoad,
-  onClick,
-  style
-}) {
+export default function LazyImage(props) {
+  const {
+    priority = false,
+    id,
+    src,
+    alt,
+    placeholderSrc,
+    className,
+    width,
+    height,
+    title,
+    onLoad,
+    onClick,
+    onError,
+    style,
+    loading,
+    decoding = 'async',
+    fetchPriority,
+    retryCount = DEFAULT_RETRY_COUNT,
+    timeoutMs = DEFAULT_TIMEOUT_MS,
+    retryDelayMs = DEFAULT_RETRY_DELAY_MS
+  } = props
   const maxWidth = siteConfig('IMAGE_COMPRESS_WIDTH')
   const defaultPlaceholderSrc = siteConfig('IMG_LAZY_LOAD_PLACEHOLDER')
+  const fallbackSrc = placeholderSrc || defaultPlaceholderSrc
   const imageRef = useRef(null)
-  const [currentSrc, setCurrentSrc] = useState(
-    placeholderSrc || defaultPlaceholderSrc
+  const attemptControllerRef = useRef(null)
+  const [currentSrc, setCurrentSrc] = useState(fallbackSrc)
+  const [attempt, setAttempt] = useState(priority ? 0 : null)
+  const [loadState, setLoadState] = useState('idle')
+  const [retryToken, setRetryToken] = useState(0)
+
+  const adjustedImageSrc = useMemo(
+    () => adjustImgSize(normalizeNotionFileUrl(src), maxWidth),
+    [src, maxWidth]
   )
 
-  /**
-   * 占位图加载成功
-   */
-  const handleThumbnailLoaded = () => {
-    if (typeof onLoad === 'function') {
-      // onLoad() // 触发传递的onLoad回调函数
-    }
-  }
-  // 原图加载完成
-  const handleImageLoaded = img => {
-    if (typeof onLoad === 'function') {
-      onLoad() // 触发传递的onLoad回调函数
-    }
-    // 移除占位符类名
-    if (imageRef.current) {
-      imageRef.current.classList.remove('lazy-image-placeholder')
-    }
-  }
-  /**
-   * 图片加载失败回调
-   */
-  const handleImageError = () => {
-    if (imageRef.current) {
-      // 尝试加载 placeholderSrc，如果失败则加载 defaultPlaceholderSrc
-      if (imageRef.current.src !== placeholderSrc && placeholderSrc) {
-        imageRef.current.src = placeholderSrc
-      } else {
-        imageRef.current.src = defaultPlaceholderSrc
-      }
-      // 移除占位符类名
-      if (imageRef.current) {
-        imageRef.current.classList.remove('lazy-image-placeholder')
-      }
-    }
-  }
+  useEffect(() => {
+    setCurrentSrc(fallbackSrc)
+    setLoadState('idle')
+    setAttempt(priority ? 0 : null)
+  }, [adjustedImageSrc, fallbackSrc, priority])
 
   useEffect(() => {
-    const adjustedImageSrc =
-      adjustImgSize(normalizeNotionFileUrl(src), maxWidth) || defaultPlaceholderSrc
+    if (!adjustedImageSrc || priority || attempt !== null) return
 
-    // 如果是优先级图片，直接加载
-    if (priority) {
-      const img = new Image()
-      img.src = adjustedImageSrc
-      img.onload = () => {
-        setCurrentSrc(adjustedImageSrc)
-        handleImageLoaded(adjustedImageSrc)
-      }
-      img.onerror = handleImageError
-      return
-    }
-
-    // 检查浏览器是否支持IntersectionObserver
     if (!window.IntersectionObserver) {
-      // 降级处理：直接加载图片
-      const img = new Image()
-      img.src = adjustedImageSrc
-      img.onload = () => {
-        setCurrentSrc(adjustedImageSrc)
-        handleImageLoaded(adjustedImageSrc)
-      }
-      img.onerror = handleImageError
+      setAttempt(0)
       return
     }
 
     const observer = new IntersectionObserver(
       entries => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            // 预加载图片
-            const img = new Image()
-            // 设置图片解码优先级
-            if ('decoding' in img) {
-              img.decoding = 'async'
-            }
-            img.src = adjustedImageSrc
-            img.onload = () => {
-              setCurrentSrc(adjustedImageSrc)
-              handleImageLoaded(adjustedImageSrc)
-            }
-            img.onerror = handleImageError
-
-            observer.unobserve(entry.target)
-          }
-        })
+        if (entries.some(entry => entry.isIntersecting)) {
+          setAttempt(0)
+          observer.disconnect()
+        }
       },
       {
         rootMargin: siteConfig('LAZY_LOAD_THRESHOLD', '200px'),
@@ -120,57 +75,160 @@ export default function LazyImage({
       }
     )
 
-    if (imageRef.current) {
-      observer.observe(imageRef.current)
+    const image = imageRef.current
+    if (image) observer.observe(image)
+
+    return () => observer.disconnect()
+  }, [adjustedImageSrc, attempt, priority])
+
+  // One effect represents one request attempt. Failed attempts wait with an
+  // exponential backoff before trying again: 600ms, then 1200ms by default.
+  useEffect(() => {
+    if (!adjustedImageSrc || attempt === null) return
+
+    let settled = false
+    let retryTimer
+    let timeoutTimer
+
+    const clearTimers = () => {
+      clearTimeout(retryTimer)
+      clearTimeout(timeoutTimer)
     }
 
-    return () => {
-      if (imageRef.current) {
-        observer.unobserve(imageRef.current)
+    const fail = event => {
+      if (settled) return
+      settled = true
+      clearTimers()
+      setCurrentSrc(fallbackSrc)
+
+      if (attempt < retryCount) {
+        setAttempt(attempt + 1)
+      } else {
+        setLoadState('error')
+        if (typeof onError === 'function') onError(event)
       }
     }
-  }, [src, maxWidth, priority])
 
-  // 动态添加width、height和className属性，仅在它们为有效值时添加
+    const succeed = event => {
+      if (settled) return
+      settled = true
+      clearTimers()
+      setLoadState('loaded')
+      imageRef.current?.classList.remove('lazy-image-placeholder')
+      if (typeof onLoad === 'function') onLoad(event)
+    }
+
+    attemptControllerRef.current = { fail, succeed }
+    setLoadState('loading')
+    setCurrentSrc(fallbackSrc)
+
+    const delay = attempt === 0 ? 0 : retryDelayMs * 2 ** (attempt - 1)
+    retryTimer = setTimeout(() => {
+      if (settled) return
+      setCurrentSrc(adjustedImageSrc)
+      timeoutTimer = setTimeout(() => fail(), timeoutMs)
+    }, delay)
+
+    return () => {
+      settled = true
+      clearTimers()
+      if (attemptControllerRef.current?.fail === fail) {
+        attemptControllerRef.current = null
+      }
+    }
+  }, [
+    adjustedImageSrc,
+    attempt,
+    fallbackSrc,
+    onError,
+    onLoad,
+    retryCount,
+    retryDelayMs,
+    retryToken,
+    timeoutMs
+  ])
+
+  if (!src) return null
+
+  const retryManually = event => {
+    event.preventDefault()
+    event.stopPropagation()
+    setCurrentSrc(fallbackSrc)
+    setLoadState('idle')
+    setAttempt(0)
+    setRetryToken(token => token + 1)
+  }
+
+  const retryWithKeyboard = event => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      retryManually(event)
+    }
+  }
+
+  if (loadState === 'error') {
+    return (
+      <span
+        id={id}
+        role='button'
+        tabIndex={0}
+        className={`${className || ''} retry-image-fallback`}
+        style={style}
+        title={title || '点击重新加载图片'}
+        aria-label={`${alt || '图片'}加载失败，点击重试`}
+        onClick={retryManually}
+        onKeyDown={retryWithKeyboard}
+      >
+        <span className='retry-image-fallback-icon' aria-hidden='true'>
+          ↻
+        </span>
+        <span>图片加载失败，点击重试</span>
+      </span>
+    )
+  }
+
+  const handleLoad = event => {
+    if (currentSrc === adjustedImageSrc) {
+      attemptControllerRef.current?.succeed(event)
+    }
+  }
+
+  const handleError = event => {
+    if (currentSrc === adjustedImageSrc) {
+      attemptControllerRef.current?.fail(event)
+    }
+  }
+
   const imgProps = {
     ref: imageRef,
     src: currentSrc,
-    'data-src': src, // 存储原始图片地址
-    alt: alt || 'Lazy loaded image',
-    onLoad: handleThumbnailLoaded,
-    onError: handleImageError,
-    className: `${className || ''} lazy-image-placeholder`,
+    'data-src': src,
+    alt: alt || '图片',
+    onLoad: handleLoad,
+    onError: handleError,
+    className: `${className || ''} ${
+      loadState === 'loaded' ? '' : 'lazy-image-placeholder'
+    }`,
     style,
-    width: width || 'auto',
-    height: height || 'auto',
     onClick,
-    // 性能优化属性
-    loading: priority ? 'eager' : 'lazy',
-    decoding: 'async',
-    // 现代图片格式支持
+    loading: loading || (priority ? 'eager' : 'lazy'),
+    decoding,
+    fetchpriority: fetchPriority || (priority ? 'high' : 'auto'),
     ...(siteConfig('WEBP_SUPPORT') && { 'data-webp': true }),
     ...(siteConfig('AVIF_SUPPORT') && { 'data-avif': true })
   }
 
   if (id) imgProps.id = id
   if (title) imgProps.title = title
-
-  if (!src) {
-    return null
-  }
+  if (width) imgProps.width = width
+  if (height) imgProps.height = height
 
   return (
     <>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img {...imgProps} />
-      {/* 预加载 */}
-      {priority && (
+      <img {...imgProps} alt={imgProps.alt} />
+      {priority && adjustedImageSrc && (
         <Head>
-          <link
-            rel='preload'
-            as='image'
-            href={adjustImgSize(normalizeNotionFileUrl(src), maxWidth)}
-          />
+          <link rel='preload' as='image' href={adjustedImageSrc} />
         </Head>
       )}
     </>
@@ -178,10 +236,10 @@ export default function LazyImage({
 }
 
 /**
- * 将 Notion 配置表中的临时 file.notion.so 地址转换为可长期解析的图片代理地址。
+ * Convert both generations of Notion signed file URLs to a stable image URL.
  */
 const normalizeNotionFileUrl = src => {
-  if (!src?.startsWith('https://file.notion.so/')) return src
+  if (!/^https:\/\/file\.notion\.(so|com)\//.test(src || '')) return src
 
   try {
     const url = new URL(src)
@@ -193,9 +251,7 @@ const normalizeNotionFileUrl = src => {
 
     if (!fileId || !fileName || !recordId) return src
 
-    const attachment = encodeURIComponent(
-      `attachment:${fileId}:${fileName}`
-    )
+    const attachment = encodeURIComponent(`attachment:${fileId}:${fileName}`)
     return `https://www.notion.so/image/${attachment}?table=${encodeURIComponent(table)}&id=${encodeURIComponent(recordId)}`
   } catch {
     return src
@@ -203,30 +259,17 @@ const normalizeNotionFileUrl = src => {
 }
 
 /**
- * 根据窗口尺寸决定压缩图片宽度
- * @param {*} src
- * @param {*} maxWidth
- * @returns
+ * Match remote image parameters to the visitor's screen where supported.
  */
 const adjustImgSize = (src, maxWidth) => {
-  if (!src) {
-    return null
-  }
+  if (!src) return null
+
   const screenWidth =
     (typeof window !== 'undefined' && window?.screen?.width) || maxWidth
 
-  // 屏幕尺寸大于默认图片尺寸，没必要再压缩
-  if (screenWidth > maxWidth) {
-    return src
-  }
+  if (screenWidth > maxWidth) return src
 
-  // 正则表达式，用于匹配 URL 中的 width 参数
-  const widthRegex = /width=\d+/
-  // 正则表达式，用于匹配 URL 中的 w 参数
-  const wRegex = /w=\d+/
-
-  // 使用正则表达式替换 width/w 参数
   return src
-    .replace(widthRegex, `width=${screenWidth}`)
-    .replace(wRegex, `w=${screenWidth}`)
+    .replace(/width=\d+/, `width=${screenWidth}`)
+    .replace(/w=\d+/, `w=${screenWidth}`)
 }

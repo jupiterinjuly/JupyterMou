@@ -1,4 +1,5 @@
 import { siteConfig } from '@/lib/config'
+import LazyImage from '@/components/LazyImage'
 import { compressImage, mapImgUrl } from '@/lib/db/notion/mapImage'
 import { normalizeRecordMap } from '@/lib/db/notion/normalizeRecordMap'
 import { isBrowser, loadExternalResource } from '@/lib/utils'
@@ -122,12 +123,15 @@ const NotionPage = ({ post, className }) => {
   return (
     <div
       id='notion-article'
-      className={`mx-auto overflow-hidden ${className || ''}`}>
+      className={`mx-auto overflow-hidden ${className || ''}`}
+    >
       <NotionRenderer
         recordMap={cleanBlockMap}
         mapPageUrl={mapPageUrl}
         mapImageUrl={mapImgUrl}
+        forceCustomImages
         components={{
+          Image: LazyImage,
           Code,
           Collection,
           Equation,

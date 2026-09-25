@@ -287,14 +287,61 @@ img {
   overflow: hidden;
 }
 
-
-.lazy-image-placeholder{
-  background: 
-      linear-gradient(90deg,#0001 33%,#0005 50%,#0001 66%)
-      #f2f2f2;
-  background-size:300% 100%;
+.lazy-image-placeholder {
+  background: linear-gradient(90deg, #0001 33%, #0005 50%, #0001 66%) #f2f2f2;
+  background-size: 300% 100%;
   animation: l1 1s infinite linear;
+}
+@keyframes l1 {
+  0% {
+    background-position: right;
   }
-  @keyframes l1 {
-  0% {background-position: right}
+}
+
+.retry-image-fallback {
+  display: flex;
+  min-height: 8rem;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid rgb(148 163 184 / 35%);
+  border-radius: 0.5rem;
+  background: linear-gradient(
+    135deg,
+    rgb(248 250 252 / 95%),
+    rgb(241 245 249 / 95%)
+  );
+  color: rgb(71 85 105);
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    color 160ms ease;
+}
+
+.retry-image-fallback:hover,
+.retry-image-fallback:focus-visible {
+  border-color: rgb(100 116 139 / 55%);
+  background: rgb(241 245 249);
+  color: rgb(30 41 59);
+  outline: none;
+}
+
+.retry-image-fallback-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.dark .retry-image-fallback {
+  border-color: rgb(100 116 139 / 35%);
+  background: linear-gradient(135deg, rgb(30 41 59 / 80%), rgb(15 23 42 / 80%));
+  color: rgb(203 213 225);
+}
+
+.notion-collection-card-cover .retry-image-fallback,
+.notion-asset-wrapper .retry-image-fallback {
+  height: 100%;
+  border-radius: 0;
 }
