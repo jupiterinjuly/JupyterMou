@@ -18,7 +18,8 @@ const Footer = ({ title }) => {
         <i className='mx-1 animate-pulse fas fa-heart' />
         <a
           href={siteConfig('LINK')}
-          className='underline font-bold  dark:text-gray-300 '>
+          className='underline font-bold  dark:text-gray-300 '
+        >
           {siteConfig('AUTHOR')}
         </a>
         .<br />
@@ -32,9 +33,9 @@ const Footer = ({ title }) => {
           <i className='fas fa-users' />
           <span className='px-1 busuanzi_value_site_uv'> </span>
         </span>
-        <h1 className='text-xs pt-4 text-light-400 dark:text-gray-400'>
+        <span className='block text-xs pt-4 text-light-400 dark:text-gray-400'>
           {title} {siteConfig('BIO') && <>|</>} {siteConfig('BIO')}
-        </h1>
+        </span>
         <PoweredBy className='justify-center' />
       </span>
       <br />

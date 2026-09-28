@@ -1,7 +1,12 @@
 import { siteConfig } from '@/lib/config'
 import { useGlobal } from '@/lib/global'
 import { loadExternalResource } from '@/lib/utils'
-import { getCanonicalUrl, isSearchRoute } from '@/lib/utils/seo'
+import {
+  buildStructuredData,
+  getArticleSeoMeta,
+  getCanonicalUrl,
+  isSearchRoute
+} from '@/lib/utils/seo'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { useEffect } from 'react'
@@ -223,7 +228,14 @@ const SEO = props => {
         type='application/ld+json'
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(
-            generateStructuredData(meta, siteInfo, url, image, AUTHOR)
+            buildStructuredData({
+              meta,
+              siteInfo,
+              url,
+              image,
+              author: AUTHOR,
+              siteUrl: LINK
+            })
           )
         }}
       />
@@ -250,71 +262,6 @@ const SEO = props => {
       {children}
     </Head>
   )
-}
-
-/**
- * 生成结构化数据
- * @param {*} meta
- * @param {*} siteInfo
- * @param {*} url
- * @param {*} image
- * @param {*} author
- * @returns
- */
-const generateStructuredData = (meta, siteInfo, url, image, author) => {
-  const baseData = {
-    '@context': 'https://schema.org',
-    '@type': 'WebSite',
-    name: siteInfo?.title,
-    description: siteInfo?.description,
-    url: siteConfig('LINK'),
-    author: {
-      '@type': 'Person',
-      name: author
-    },
-    publisher: {
-      '@type': 'Organization',
-      name: siteInfo?.title,
-      logo: {
-        '@type': 'ImageObject',
-        url: siteInfo?.icon
-      }
-    }
-  }
-
-  // 如果是文章页面，添加文章结构化数据
-  if (meta?.type === 'Post') {
-    return {
-      '@context': 'https://schema.org',
-      '@type': 'BlogPosting',
-      headline: meta.title,
-      description: meta.description,
-      image: image,
-      url: url,
-      datePublished: meta.publishDay,
-      dateModified: meta.lastEditedDay || meta.publishDay,
-      author: {
-        '@type': 'Person',
-        name: author
-      },
-      publisher: {
-        '@type': 'Organization',
-        name: siteInfo?.title,
-        logo: {
-          '@type': 'ImageObject',
-          url: siteInfo?.icon
-        }
-      },
-      mainEntityOfPage: {
-        '@type': 'WebPage',
-        '@id': url
-      },
-      keywords: meta.tags?.join(', '),
-      articleSection: meta.category
-    }
-  }
-
-  return baseData
 }
 
 /**
@@ -425,17 +372,7 @@ const getSEOMeta = (props, router, locale) => {
         type: 'website'
       }
     default:
-      return {
-        title: post
-          ? `${post?.title} | ${siteInfo?.title}`
-          : `${siteInfo?.title} | loading`,
-        description: post?.summary,
-        type: post?.type,
-        slug: post?.slug,
-        image: post?.pageCoverThumbnail || `${siteInfo?.pageCover}`,
-        category: post?.category?.[0],
-        tags: post?.tags
-      }
+      return getArticleSeoMeta(post, siteInfo)
   }
 }
 

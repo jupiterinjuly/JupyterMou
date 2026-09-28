@@ -33,7 +33,8 @@ export default function PostHero({ post, siteInfo }) {
 
       <header
         id='article-header-cover'
-        className='bg-black bg-opacity-70 absolute top-0 w-full h-96 py-10 flex justify-center items-center '>
+        className='bg-black bg-opacity-70 absolute top-0 w-full h-96 py-10 flex justify-center items-center '
+      >
         <div className='mt-10'>
           <div className='mb-3 flex justify-center'>
             {post.category && (
@@ -41,7 +42,8 @@ export default function PostHero({ post, siteInfo }) {
                 <SmartLink
                   href={`/category/${post.category}`}
                   passHref
-                  legacyBehavior>
+                  legacyBehavior
+                >
                   <div className='cursor-pointer px-2 py-1 mb-2 border rounded-sm dark:border-white text-sm font-medium hover:underline duration-200 shadow-text-md text-white'>
                     {post.category}
                   </div>
@@ -51,12 +53,12 @@ export default function PostHero({ post, siteInfo }) {
           </div>
 
           {/* 文章Title */}
-          <div className='leading-snug font-bold xs:text-4xl sm:text-4xl md:text-5xl md:leading-snug text-4xl shadow-text-md flex justify-center text-center text-white'>
+          <h1 className='leading-snug font-bold xs:text-4xl sm:text-4xl md:text-5xl md:leading-snug text-4xl shadow-text-md flex justify-center text-center text-white'>
             {siteConfig('POST_TITLE_ICON') && (
               <NotionIcon icon={post.pageIcon} className='text-4xl mx-1' />
             )}
             {post.title}
-          </div>
+          </h1>
 
           <section className='flex-wrap shadow-text-md flex text-sm justify-center mt-4 text-white dark:text-gray-400 font-light leading-8'>
             <div className='flex justify-center dark:text-gray-200 text-opacity-70'>
@@ -65,7 +67,8 @@ export default function PostHero({ post, siteInfo }) {
                   <SmartLink
                     href={`/archive#${formatDateFmt(post?.publishDate, 'yyyy-MM')}`}
                     passHref
-                    className='pl-1 mr-2 cursor-pointer hover:underline'>
+                    className='pl-1 mr-2 cursor-pointer hover:underline'
+                  >
                     {locale.COMMON.POST_TIME}: {post?.publishDay}
                   </SmartLink>
                 </>
