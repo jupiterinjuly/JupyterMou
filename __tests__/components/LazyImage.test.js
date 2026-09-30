@@ -105,6 +105,20 @@ describe('LazyImage Component', () => {
     })
   })
 
+  it('preserves the zoom class added by the image load callback', async () => {
+    const attachZoom = event => {
+      event.currentTarget.classList.add('medium-zoom-image')
+    }
+
+    render(<LazyImage {...defaultProps} onLoad={attachZoom} priority />)
+
+    const image = screen.getByAltText('Test image')
+    await waitFor(() => expect(image).toHaveAttribute('src', '/test-image.jpg'))
+    fireEvent.load(image)
+
+    await waitFor(() => expect(image).toHaveClass('medium-zoom-image'))
+  })
+
   it('retries twice before showing a manual retry fallback', () => {
     jest.useFakeTimers()
     render(
