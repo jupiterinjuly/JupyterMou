@@ -53,15 +53,18 @@ describe('public analytics dashboard', () => {
       }
     })
 
-    render(<DashboardItemHome />)
+    render(<DashboardItemHome pageIcons={[{ path: '/article/example', icon: '🪐' }]} />)
 
     expect(
-      screen.getByRole('heading', { name: '站点数据' })
+      screen.getByRole('heading', { name: '世界从哪里来？' })
     ).toBeInTheDocument()
     expect(screen.getByText('近7天用户')).toBeInTheDocument()
     expect(screen.getByText('累计浏览量')).toBeInTheDocument()
     expect(screen.getByText('Example article')).toBeInTheDocument()
-    expect(screen.getByText('1. China')).toBeInTheDocument()
+    expect(screen.getByText('🪐')).toBeInTheDocument()
+    expect(screen.getByText('China')).toBeInTheDocument()
+    expect(screen.getByText('🇨🇳')).toBeInTheDocument()
+    expect(screen.getByText('20 次浏览')).toBeInTheDocument()
     expect(screen.getByTestId('visitor-globe')).toBeInTheDocument()
     expect(screen.getByTestId('trend-chart')).toBeInTheDocument()
   })

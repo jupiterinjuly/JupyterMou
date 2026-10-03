@@ -26,13 +26,13 @@ export function AnalyticsCard() {
       className='block rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400'
       aria-label='查看完整站点数据'
     >
-      <Card className='group'>
+      <Card className='group motion-safe:transition-transform motion-safe:duration-300 motion-safe:hover:-translate-y-1'>
         <div className='flex items-center justify-between mb-3'>
-          <div>
+          <div className='group-hover:text-violet-700 dark:group-hover:text-violet-300 transition-colors'>
             <i className='fas fa-chart-pie mr-2' />
             站点足迹
           </div>
-          <i className='fas fa-arrow-right text-xs text-gray-400 group-hover:translate-x-1 transition-transform' />
+          <i className='fas fa-arrow-right text-xs text-gray-400 group-hover:text-violet-600 motion-safe:group-hover:translate-x-1 motion-safe:transition-transform' />
         </div>
 
         {loading && (
@@ -66,7 +66,7 @@ export function AnalyticsCard() {
               <Stat label='近7天浏览' value={data.summary.sevenDayViews} />
             </div>
             <VisitorGlobe countries={data.countries} size={176} compact />
-            <div className='text-center text-xs text-indigo-500 dark:text-indigo-300 mt-1'>
+            <div className='text-center text-xs text-violet-700 dark:text-violet-300 group-hover:font-semibold mt-2 transition-colors'>
               查看完整数据 →
             </div>
           </>

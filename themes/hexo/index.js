@@ -339,7 +339,7 @@ const Layout404 = props => {
 /**
  * 公开站点数据页
  */
-const LayoutDashboard = () => <DashboardBody />
+const LayoutDashboard = props => <DashboardBody pageIcons={props.analyticsPageIcons} />
 
 /**
  * 分类列表

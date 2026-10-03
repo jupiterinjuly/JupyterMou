@@ -4,6 +4,25 @@ import SmartLink from '@/components/SmartLink'
 import useAnalyticsSummary from '@/hooks/useAnalyticsSummary'
 
 const formatNumber = value => new Intl.NumberFormat('zh-CN').format(value || 0)
+const countryFlag = code =>
+  /^[A-Z]{2}$/.test(code || '')
+    ? String.fromCodePoint(
+        ...[...code].map(letter => letter.charCodeAt(0) + 127397)
+      )
+    : '🌍'
+
+const fallbackPageEmoji = path => {
+  if (path === '/') return '🏠'
+  if (path.startsWith('/dashboard')) return '🌏'
+  if (path.startsWith('/about')) return '👋'
+  return '📄'
+}
+
+const pageTitle = page => {
+  if (page.path === '/') return '首页 · 从这里出发'
+  if (page.path === '/dashboard') return '世界从哪里来？'
+  return page.title.split(' | JupyterMou')[0]
+}
 
 const Panel = ({ children, className = '' }) => (
   <section
@@ -43,7 +62,7 @@ const LoadingDashboard = () => (
   </div>
 )
 
-export default function DashboardItemHome() {
+export default function DashboardItemHome({ pageIcons = [] }) {
   const { data, error, loading, retry } = useAnalyticsSummary()
 
   if (loading) return <LoadingDashboard />
@@ -80,19 +99,18 @@ export default function DashboardItemHome() {
 
   return (
     <div className='space-y-5 md:space-y-6 text-gray-800 dark:text-gray-200'>
-      <header className='flex flex-col md:flex-row md:items-end justify-between gap-3'>
+      <header className='text-center max-w-3xl mx-auto pt-1 pb-4 md:pb-6'>
         <div>
-          <p className='text-indigo-500 dark:text-indigo-300 text-sm font-medium mb-1'>
-            JupyterMou Analytics
+          <p className='text-indigo-500 dark:text-indigo-300 text-sm font-medium mb-3'>
+            Where are you from? · JupyterMou
           </p>
-          <h1 className='text-3xl md:text-4xl font-semibold'>站点数据</h1>
-          <p className='text-gray-500 dark:text-gray-400 mt-2'>
-            记录文字被看见的足迹，也记录来自世界的偶然相遇。
+          <h1 className='text-3xl md:text-4xl font-semibold'>世界从哪里来？</h1>
+          <p className='text-gray-500 dark:text-gray-400 mt-4 leading-relaxed px-2'>
+            每一次点开，都是从某个角落寄来的问候。一起看看文字去过了哪里。
           </p>
         </div>
-        <div className='text-xs text-gray-500 dark:text-gray-400 md:text-right'>
-          <div>更新于 {updatedAt}</div>
-          <div className='mt-1'>数据每 30 分钟刷新</div>
+        <div className='text-xs text-gray-400 dark:text-gray-500 mt-4'>
+          更新于 {updatedAt} · 数据每 30 分钟刷新
         </div>
       </header>
 
@@ -101,7 +119,7 @@ export default function DashboardItemHome() {
           icon='fas fa-user-group'
           label='近7天用户'
           value={data.summary.sevenDayUsers}
-          accent='bg-emerald-500'
+          accent='bg-violet-500'
         />
         <KpiCard
           icon='fas fa-eye'
@@ -113,13 +131,13 @@ export default function DashboardItemHome() {
           icon='fas fa-users'
           label='累计用户'
           value={data.summary.allTimeUsers}
-          accent='bg-amber-500'
+          accent='bg-purple-500'
         />
         <KpiCard
           icon='fas fa-chart-simple'
           label='累计浏览量'
           value={data.summary.allTimeViews}
-          accent='bg-rose-500'
+          accent='bg-fuchsia-500'
         />
       </div>
 
@@ -134,46 +152,65 @@ export default function DashboardItemHome() {
         <Panel>
           <h2 className='text-lg font-semibold'>来自世界的足迹</h2>
           <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
-            按历史访客国家汇总
+            按历史访客国家汇总 · 悬停光点可看详情
           </p>
           <VisitorGlobe countries={data.countries} size={300} />
           <div className='text-center text-xs text-gray-400'>
             {data.countries.length} 个国家或地区
           </div>
+          <p className='text-center text-[11px] leading-relaxed text-gray-400 mt-2'>
+            光点为国家汇总位置，并非访客的精确坐标
+          </p>
         </Panel>
       </div>
 
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-5 md:gap-6'>
         <Panel>
           <h2 className='text-lg font-semibold mb-5'>近7天热门页面 Top 5</h2>
-          <ol className='space-y-4'>
+          <ol className='space-y-2'>
             {data.topPages.length === 0 && (
               <li className='text-sm text-gray-500'>暂无页面数据</li>
             )}
-            {data.topPages.map((page, index) => (
-              <li
-                key={`${page.path}-${index}`}
-                className='flex items-center gap-3'
-              >
-                <span className='w-7 h-7 flex-none rounded-lg bg-indigo-50 dark:bg-gray-700 text-indigo-500 dark:text-indigo-300 flex items-center justify-center text-sm font-semibold'>
-                  {index + 1}
-                </span>
-                <SmartLink
-                  href={page.path}
-                  className='min-w-0 flex-1 hover:text-indigo-500'
-                >
-                  <div className='truncate text-sm font-medium'>
-                    {page.title}
-                  </div>
-                  <div className='truncate text-xs text-gray-400 mt-0.5'>
-                    {page.path}
-                  </div>
-                </SmartLink>
-                <span className='text-sm tabular-nums text-gray-500 dark:text-gray-400'>
-                  {formatNumber(page.views)}
-                </span>
-              </li>
-            ))}
+            {data.topPages.map((page, index) => {
+              const maxViews = Math.max(1, data.topPages[0]?.views || 1)
+              const width = Math.max(6, (page.views / maxViews) * 100)
+              const notionIcon = pageIcons.find(item => item.path === page.path)?.icon
+              return (
+                <li key={`${page.path}-${index}`}>
+                  <SmartLink
+                    href={page.path}
+                    title={page.title}
+                    className='group flex items-center gap-3 rounded-xl px-2 py-3 hover:bg-violet-50 dark:hover:bg-slate-800/70 focus:outline-none focus:ring-2 focus:ring-violet-300 transition-colors'
+                  >
+                    <span className='w-9 h-9 flex-none rounded-xl bg-violet-50 dark:bg-slate-700 flex items-center justify-center text-xl group-hover:scale-110 motion-safe:transition-transform' aria-hidden='true'>
+                      {notionIcon && !/^https?:|^data:/.test(notionIcon) ? notionIcon : fallbackPageEmoji(page.path)}
+                    </span>
+                    <div className='min-w-0 flex-1'>
+                      <div className='flex items-center justify-between gap-2'>
+                        <span className='truncate text-sm font-medium group-hover:text-violet-700 dark:group-hover:text-violet-300 transition-colors'>
+                          <span className='text-xs text-gray-400 mr-2'>
+                            {String(index + 1).padStart(2, '0')}
+                          </span>
+                          {pageTitle(page)}
+                        </span>
+                        <span className='flex-none text-xs tabular-nums text-gray-500 dark:text-gray-400'>
+                          {formatNumber(page.views)} 次浏览
+                        </span>
+                      </div>
+                      <div className='truncate text-xs text-gray-400 mt-0.5 mb-2'>
+                        {page.path}
+                      </div>
+                      <div className='h-1 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden'>
+                        <div
+                          className='h-full rounded-full bg-gradient-to-r from-indigo-400 to-violet-500 motion-safe:transition-all motion-safe:duration-500 group-hover:opacity-80'
+                          style={{ width: `${width}%` }}
+                        />
+                      </div>
+                    </div>
+                  </SmartLink>
+                </li>
+              )
+            })}
           </ol>
         </Panel>
 
@@ -184,10 +221,17 @@ export default function DashboardItemHome() {
               const maxUsers = Math.max(1, data.countries[0]?.users || 1)
               const width = Math.max(6, (country.users / maxUsers) * 100)
               return (
-                <li key={country.code}>
+                <li
+                  key={country.code}
+                  className='rounded-lg px-2 py-1.5 hover:bg-violet-50 dark:hover:bg-slate-800/70 transition-colors'
+                >
                   <div className='flex justify-between text-sm mb-1.5'>
-                    <span>
-                      {index + 1}. {country.name}
+                    <span className='flex items-center gap-2'>
+                      <span className='text-gray-400 tabular-nums text-xs w-5'>
+                        {String(index + 1).padStart(2, '0')}
+                      </span>
+                      <span aria-hidden='true'>{countryFlag(country.code)}</span>
+                      <span>{country.name}</span>
                     </span>
                     <span className='tabular-nums text-gray-500 dark:text-gray-400'>
                       {formatNumber(country.users)}
@@ -195,7 +239,7 @@ export default function DashboardItemHome() {
                   </div>
                   <div className='h-1.5 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden'>
                     <div
-                      className='h-full rounded-full bg-gradient-to-r from-indigo-400 to-purple-400'
+                      className='h-full rounded-full bg-gradient-to-r from-indigo-400 to-violet-500 motion-safe:transition-all motion-safe:duration-500'
                       style={{ width: `${width}%` }}
                     />
                   </div>
@@ -203,6 +247,9 @@ export default function DashboardItemHome() {
               )
             })}
           </ol>
+          <p className='text-[11px] leading-relaxed text-gray-400 mt-5'>
+            国家由 GA4 根据访问时的网络信息推断，可能受代理网络等因素影响。
+          </p>
         </Panel>
       </div>
     </div>
