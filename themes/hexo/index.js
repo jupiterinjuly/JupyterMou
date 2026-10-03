@@ -1,4 +1,5 @@
 import Comment from '@/components/Comment'
+import DashboardBody from '@/components/ui/dashboard/DashboardBody'
 import replaceSearchResult from '@/components/Mark'
 import NotionPage from '@/components/NotionPage'
 import ShareBar from '@/components/ShareBar'
@@ -51,12 +52,14 @@ export const useHexoGlobal = () => useContext(ThemeGlobalHexo)
  * @constructor
  */
 const LayoutBase = props => {
-  const { post, children, slotTop, className } = props
+  const { post, children, slotTop, className, hideSidebar } = props
   const { onLoading, fullWidth } = useGlobal()
   const router = useRouter()
   const isFallbackPage =
     props.isFallbackPage ||
     ['/404', '/500', '/_error'].includes(router.pathname)
+  const isDashboard = router.pathname === '/dashboard/[[...index]]'
+  const shouldHideSidebar = hideSidebar || isDashboard
   const showRandomButton = siteConfig('HEXO_MENU_RANDOM', false, CONFIG)
 
   const headerSlot = post ? (
@@ -137,7 +140,7 @@ const LayoutBase = props => {
               className={`${className || ''} w-full ${
                 isFallbackPage
                   ? 'max-w-none'
-                  : fullWidth
+                  : fullWidth || shouldHideSidebar
                     ? 'max-w-[1380px]'
                     : 'max-w-4xl'
               } h-full overflow-hidden`}
@@ -161,7 +164,7 @@ const LayoutBase = props => {
             </div>
 
             {/* 右侧栏 */}
-            {!isFallbackPage && <SideRight {...props} />}
+            {!isFallbackPage && !shouldHideSidebar && <SideRight {...props} />}
           </div>
         </main>
 
@@ -334,6 +337,11 @@ const Layout404 = props => {
 }
 
 /**
+ * 公开站点数据页
+ */
+const LayoutDashboard = () => <DashboardBody />
+
+/**
  * 分类列表
  * @param {*} props
  * @returns
@@ -404,6 +412,7 @@ export {
   LayoutArchive,
   LayoutBase,
   LayoutCategoryIndex,
+  LayoutDashboard,
   LayoutIndex,
   LayoutPostList,
   LayoutSearch,

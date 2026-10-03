@@ -50,11 +50,13 @@
   "dependencies": {
     "@clerk/localizations": "^3.17.1",
     "@clerk/nextjs": "^5.7.5",
+    "@google-analytics/data": "^7.2.1",
     "@headlessui/react": "^1.7.19",
     "@next/bundle-analyzer": "^12.3.7",
     "@vercel/analytics": "^1.5.0",
     "algoliasearch": "^4.25.2",
     "axios": "^1.7.2",
+    "cobe": "^2.0.1",
     "critters": "^0.0.23",
     "feed": "^4.2.2",
     "ioredis": "^5.6.1",
@@ -70,7 +72,8 @@
     "react-hotkeys-hook": "^4.6.2",
     "react-notion-x": "7.12.1",
     "react-share": "^5.2.2",
-    "react-tweet-embed": "~2.0.0"
+    "react-tweet-embed": "~2.0.0",
+    "world-countries": "^5.1.0"
   },
   "devDependencies": {
     "@types/node": "22.15.3",

@@ -37,7 +37,7 @@ const CONFIG = {
   HEXO_ARTICLE_RECOMMEND: true, // 文章关联推荐
 
   HEXO_WIDGET_LATEST_POSTS: true, // 显示最新文章卡
-  HEXO_WIDGET_ANALYTICS: false, // 显示统计卡
+  HEXO_WIDGET_ANALYTICS: true, // 首页最近更新与公告之间显示站点统计卡
   HEXO_WIDGET_TO_TOP: true,
   HEXO_WIDGET_TO_COMMENT: true, // 跳到评论区
   HEXO_WIDGET_DARK_MODE: true, // 夜间模式

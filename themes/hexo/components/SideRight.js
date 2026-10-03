@@ -2,6 +2,7 @@ import Live2D from '@/components/Live2D'
 import { siteConfig } from '@/lib/config'
 import { useGlobal } from '@/lib/global'
 import dynamic from 'next/dynamic'
+import { useRouter } from 'next/router'
 import CONFIG from '../config'
 import { AnalyticsCard } from './AnalyticsCard'
 import Announcement from './Announcement'
@@ -47,6 +48,8 @@ export default function SideRight(props) {
   } = props
 
   const { locale } = useGlobal()
+  const router = useRouter()
+  const isHome = router.route === '/'
 
   // 文章全屏处理
   if (post && post?.fullWidth) {
@@ -56,7 +59,8 @@ export default function SideRight(props) {
   return (
     <div
       id='sideRight'
-      className={` lg:w-80 lg:pt-8 ${post ? 'lg:pt-0' : 'lg:pt-4'}`}>
+      className={` lg:w-80 lg:pt-8 ${post ? 'lg:pt-0' : 'lg:pt-4'}`}
+    >
       <div className='sticky top-8 space-y-4'>
         {post && post.toc && post.toc.length > 1 && (
           <Card>
@@ -65,10 +69,6 @@ export default function SideRight(props) {
         )}
 
         <InfoCard {...props} />
-        {siteConfig('HEXO_WIDGET_ANALYTICS', null, CONFIG) && (
-          <AnalyticsCard {...props} />
-        )}
-
         {showCategory && (
           <Card>
             <div className='ml-2 mb-1 '>
@@ -92,6 +92,10 @@ export default function SideRight(props) {
               <LatestPostsGroup {...props} />
             </Card>
           )}
+
+        {isHome && siteConfig('HEXO_WIDGET_ANALYTICS', null, CONFIG) && (
+          <AnalyticsCard />
+        )}
 
         <Announcement post={notice} />
 

@@ -18,7 +18,7 @@ export async function getStaticProps({ locale }) {
   const prefix = 'dashboard'
   const props = await resolvePostProps({
     prefix,
-    locale,
+    locale
   })
 
   return {
@@ -26,25 +26,17 @@ export async function getStaticProps({ locale }) {
     revalidate: process.env.EXPORT
       ? undefined
       : siteConfig(
-        'NEXT_REVALIDATE_SECOND',
-        BLOG.NEXT_REVALIDATE_SECOND,
-        props.NOTION_CONFIG
-      )
+          'NEXT_REVALIDATE_SECOND',
+          BLOG.NEXT_REVALIDATE_SECOND,
+          props.NOTION_CONFIG
+        )
   }
 }
 
 export const getStaticPaths = () => {
   return {
-    paths: [
-      { params: { index: [] } }, // 对应首页路径
-      { params: { index: ['membership'] } },
-      { params: { index: ['balance'] } },
-      { params: { index: ['user-profile'] } },
-      { params: { index: ['user-profile', 'security'] } }, // 嵌套路由，按结构传递
-      { params: { index: ['order'] } },
-      { params: { index: ['affiliate'] } }
-    ],
-    fallback: 'blocking' // 或者 true，阻塞式渲染
+    paths: [{ params: { index: [] } }],
+    fallback: false
   }
 }
 

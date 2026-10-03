@@ -58,7 +58,7 @@ The endpoint will request:
 
 1. Last seven days summary:
    - Metrics: `activeUsers`, `screenPageViews`
-   - Range: `7daysAgo` through `today`
+   - Range: `6daysAgo` through `today` (seven calendar days including today)
 2. All-time summary:
    - Metrics: `totalUsers`, `screenPageViews`
    - Range: `2020-01-01` through `today`
@@ -249,4 +249,3 @@ Replace the demo dashboard body with a full-width analytics page. Remove the dem
 3. Add server-only GA environment variables in Vercel for Production and Preview.
 4. Deploy and validate against the live GA property.
 5. Keep the feature visible only when the endpoint is configured successfully; otherwise render the quiet unavailable state without disrupting the site.
-
