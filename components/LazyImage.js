@@ -42,6 +42,7 @@ export default function LazyImage(props) {
   const [attempt, setAttempt] = useState(priority ? 0 : null)
   const [loadState, setLoadState] = useState('idle')
   const [retryToken, setRetryToken] = useState(0)
+  const [isZoomAttached, setIsZoomAttached] = useState(false)
 
   const adjustedImageSrc = useMemo(
     () => adjustImgSize(normalizeNotionFileUrl(src), maxWidth),
@@ -52,6 +53,7 @@ export default function LazyImage(props) {
     setCurrentSrc(fallbackSrc)
     setLoadState('idle')
     setAttempt(priority ? 0 : null)
+    setIsZoomAttached(false)
   }, [adjustedImageSrc, fallbackSrc, priority])
 
   useEffect(() => {
@@ -116,6 +118,9 @@ export default function LazyImage(props) {
       setLoadState('loaded')
       imageRef.current?.classList.remove('lazy-image-placeholder')
       if (typeof onLoad === 'function') onLoad(event)
+      setIsZoomAttached(
+        event.currentTarget.classList.contains('medium-zoom-image')
+      )
     }
 
     attemptControllerRef.current = { fail, succeed }
@@ -207,7 +212,7 @@ export default function LazyImage(props) {
     onError: handleError,
     className: `${className || ''} ${
       loadState === 'loaded' ? '' : 'lazy-image-placeholder'
-    }`,
+    } ${isZoomAttached ? 'medium-zoom-image' : ''}`,
     style,
     onClick,
     loading: loading || (priority ? 'eager' : 'lazy'),
