@@ -107,6 +107,9 @@ const SocialButton = () => {
                   className='w-44 max-w-none rounded-md'
                   src={CONTACT_INSTAGRAM_QR_IMAGE}
                   alt='Instagram 二维码'
+                  width='786'
+                  height='1310'
+                  loading='eager'
                 />
               </span>
             )}
@@ -200,6 +203,9 @@ const SocialButton = () => {
                     className='w-44 max-w-none rounded-md'
                     src={CONTACT_WECHAT_QR_IMAGE}
                     alt='微信二维码'
+                    width='888'
+                    height='1131'
+                    loading='eager'
                   />
                 ) : (
                   <span className='block h-36 w-36'>
