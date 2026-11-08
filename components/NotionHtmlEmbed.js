@@ -62,7 +62,17 @@ function HtmlAttachment({ block }) {
           <>
             <button
               type='button'
-              onClick={() => frameRef.current?.requestFullscreen?.()}
+              onClick={async () => {
+                try {
+                  if (!frameRef.current?.requestFullscreen) {
+                    setExpanded(true)
+                    return
+                  }
+                  await frameRef.current.requestFullscreen()
+                } catch {
+                  setExpanded(true)
+                }
+              }}
               className='underline'
             >
               全屏查看
