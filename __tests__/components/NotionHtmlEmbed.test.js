@@ -65,3 +65,17 @@ it('shows an actionable error and allows retry instead of a permanent blank', as
   await screen.findByTitle('replay.html')
   await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2))
 })
+
+it('expands the replay when the browser denies fullscreen', async () => {
+  global.fetch = jest.fn().mockResolvedValue({
+    ok: true,
+    json: async () => ({ html: '<p>replay</p>' })
+  })
+  render(<NotionHtmlEmbed block={block} fallbackComponent={Fallback} />)
+  const frame = await screen.findByTitle('replay.html')
+  frame.requestFullscreen = jest
+    .fn()
+    .mockRejectedValue(new Error('not granted'))
+  fireEvent.click(screen.getByText('全屏查看'))
+  await waitFor(() => expect(frame.style.height).toBe('1100px'))
+})
