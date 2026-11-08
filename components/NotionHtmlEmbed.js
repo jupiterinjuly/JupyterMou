@@ -62,13 +62,15 @@ function HtmlAttachment({ block }) {
           <>
             <button
               type='button'
-              onClick={async () => {
+              onClick={() => {
                 try {
                   if (!frameRef.current?.requestFullscreen) {
                     setExpanded(true)
                     return
                   }
-                  await frameRef.current.requestFullscreen()
+                  frameRef.current
+                    .requestFullscreen()
+                    .catch(() => setExpanded(true))
                 } catch {
                   setExpanded(true)
                 }
