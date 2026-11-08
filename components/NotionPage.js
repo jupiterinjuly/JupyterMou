@@ -6,8 +6,9 @@ import { isBrowser, loadExternalResource } from '@/lib/utils'
 import mediumZoom from '@fisch0920/medium-zoom'
 import 'katex/dist/katex.min.css'
 import dynamic from 'next/dynamic'
-import { useEffect, useRef } from 'react'
-import { NotionRenderer } from 'react-notion-x'
+import { useCallback, useEffect, useRef } from 'react'
+import { NotionRenderer, useNotionContext } from 'react-notion-x'
+import NotionHtmlEmbed from './NotionHtmlEmbed'
 
 /**
  * 整个站点的核心组件
@@ -16,6 +17,11 @@ import { NotionRenderer } from 'react-notion-x'
  * @returns
  */
 const NotionPage = ({ post, className }) => {
+  const defaultEmbed = useNotionContext().components.Embed
+  const Embed = useCallback(
+    props => <NotionHtmlEmbed {...props} fallbackComponent={defaultEmbed} />,
+    [defaultEmbed]
+  )
   // 是否关闭数据库和画册的点击跳转
   const POST_DISABLE_GALLERY_CLICK = siteConfig('POST_DISABLE_GALLERY_CLICK')
   const POST_DISABLE_DATABASE_CLICK = siteConfig('POST_DISABLE_DATABASE_CLICK')
@@ -132,6 +138,7 @@ const NotionPage = ({ post, className }) => {
         forceCustomImages
         components={{
           Image: LazyImage,
+          Embed,
           Code,
           Collection,
           Equation,
