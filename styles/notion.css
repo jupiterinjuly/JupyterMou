@@ -437,6 +437,33 @@ summary > .notion-h {
   margin-left: 1.1em;
 }
 
+/* Collection groups live inside the article column, not a full-width Notion
+   page. Override the renderer's viewport-based inline centering padding. */
+.notion .notion-collection-group > .notion-collection-group-title {
+  padding: 8px 0 !important;
+  list-style-position: inside;
+  line-height: 1.5;
+}
+
+.notion .notion-collection-group > .notion-collection-group-title > div {
+  display: inline-flex;
+  align-items: baseline;
+  max-width: calc(100% - 1.5em);
+  vertical-align: middle;
+  transform: none;
+}
+
+.notion .notion-collection-group-title .notion-property {
+  min-width: 0;
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+
+.notion .notion-collection-group > :not(summary) {
+  margin-left: 0;
+}
+
 .notion-h {
   position: relative;
   font-weight: 600;
