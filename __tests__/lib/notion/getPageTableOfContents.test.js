@@ -1,5 +1,9 @@
 import { getPageTableOfContents } from '@/lib/db/notion/getPageTableOfContents'
 
+jest.mock('notion-utils', () => ({
+  getTextContent: value => (value || []).map(item => item[0]).join('')
+}))
+
 describe('getPageTableOfContents', () => {
   it('supports modern Notion heading block types', () => {
     const page = {

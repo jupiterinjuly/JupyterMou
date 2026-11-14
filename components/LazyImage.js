@@ -17,6 +17,7 @@ export default function LazyImage(props) {
     id,
     src,
     alt,
+    fallbackSrc: imageFallbackSrc,
     placeholderSrc,
     className,
     width,
@@ -35,7 +36,12 @@ export default function LazyImage(props) {
   } = props
   const maxWidth = siteConfig('IMAGE_COMPRESS_WIDTH')
   const defaultPlaceholderSrc = siteConfig('IMG_LAZY_LOAD_PLACEHOLDER')
-  const fallbackSrc = placeholderSrc || defaultPlaceholderSrc
+  const fallbackSrc =
+    imageFallbackSrc || placeholderSrc || defaultPlaceholderSrc
+  const targetWidth =
+    Number(width) > 0
+      ? Math.min(Number(width), Number(maxWidth) || Number(width))
+      : maxWidth
   const imageRef = useRef(null)
   const attemptControllerRef = useRef(null)
   const [currentSrc, setCurrentSrc] = useState(fallbackSrc)
@@ -45,8 +51,8 @@ export default function LazyImage(props) {
   const [isZoomAttached, setIsZoomAttached] = useState(false)
 
   const adjustedImageSrc = useMemo(
-    () => adjustImgSize(normalizeNotionFileUrl(src), maxWidth),
-    [src, maxWidth]
+    () => adjustImgSize(normalizeNotionFileUrl(src), targetWidth),
+    [src, targetWidth]
   )
 
   useEffect(() => {
@@ -213,7 +219,10 @@ export default function LazyImage(props) {
     className: `${className || ''} ${
       loadState === 'loaded' ? '' : 'lazy-image-placeholder'
     } ${isZoomAttached ? 'medium-zoom-image' : ''}`,
-    style,
+    style: {
+      aspectRatio: width && height ? `${width} / ${height}` : undefined,
+      ...style
+    },
     onClick,
     loading: loading || (priority ? 'eager' : 'lazy'),
     decoding,
@@ -272,9 +281,10 @@ const adjustImgSize = (src, maxWidth) => {
   const screenWidth =
     (typeof window !== 'undefined' && window?.screen?.width) || maxWidth
 
-  if (screenWidth > maxWidth) return src
+  const targetWidth =
+    Math.min(Number(screenWidth), Number(maxWidth)) || maxWidth
 
   return src
-    .replace(/width=\d+/, `width=${screenWidth}`)
-    .replace(/w=\d+/, `w=${screenWidth}`)
+    .replace(/width=\d+/, `width=${targetWidth}`)
+    .replace(/w=\d+/, `w=${targetWidth}`)
 }

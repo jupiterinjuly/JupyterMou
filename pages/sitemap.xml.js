@@ -2,8 +2,13 @@
 import BLOG from '@/blog.config'
 import { siteConfig } from '@/lib/config'
 import { fetchGlobalAllData } from '@/lib/db/SiteDataApi'
+import {
+  buildSitemapLoc,
+  normalizeSitemapBaseUrl,
+  normalizeSitemapLocale,
+  toSitemapDateString
+} from '@/lib/sitemap-utils'
 import { extractLangId, extractLangPrefix } from '@/lib/utils/pageId'
-import { getSitemapPath } from '@/lib/utils/seo'
 import { getServerSideSitemap } from 'next-sitemap'
 
 export const getServerSideProps = async ctx => {
@@ -19,7 +24,11 @@ export const getServerSideProps = async ctx => {
       pageId: id,
       from: 'sitemap.xml'
     })
-    const link = siteConfig('LINK', BLOG.LINK, siteData.NOTION_CONFIG)
+    const link = siteConfig(
+      'LINK',
+      siteData?.siteInfo?.link,
+      siteData.NOTION_CONFIG
+    )
     const localeFields = generateLocalesSitemap(link, siteData.allPages, locale)
     fields = fields.concat(localeFields)
   }
@@ -35,58 +44,90 @@ export const getServerSideProps = async ctx => {
 }
 
 function generateLocalesSitemap(link, allPages, locale) {
-  // 确保链接不以斜杠结尾
-  if (link && link.endsWith('/')) {
-    link = link.slice(0, -1)
-  }
+  const normalizedLink = normalizeSitemapBaseUrl(link)
+  const normalizedLocale = normalizeSitemapLocale(locale)
+  const dateNow = toSitemapDateString(new Date())
 
-  if (locale && locale.length > 0 && locale.indexOf('/') !== 0) {
-    locale = '/' + locale
-  }
-  const dateNow = new Date().toISOString().split('T')[0]
   const defaultFields = [
     {
-      loc: `${link}${locale}`,
+      loc: buildSitemapLoc({
+        baseUrl: normalizedLink,
+        locale: normalizedLocale
+      }),
       lastmod: dateNow,
       changefreq: 'daily',
       priority: '0.7'
     },
     {
-      loc: `${link}${locale}/archive`,
+      loc: buildSitemapLoc({
+        baseUrl: normalizedLink,
+        locale: normalizedLocale,
+        slug: 'archive'
+      }),
       lastmod: dateNow,
       changefreq: 'daily',
       priority: '0.7'
     },
     {
-      loc: `${link}${locale}/category`,
+      loc: buildSitemapLoc({
+        baseUrl: normalizedLink,
+        locale: normalizedLocale,
+        slug: 'category'
+      }),
       lastmod: dateNow,
       changefreq: 'daily',
       priority: '0.7'
     },
     {
-      loc: `${link}${locale}/rss/feed.xml`,
+      loc: buildSitemapLoc({
+        baseUrl: normalizedLink,
+        locale: normalizedLocale,
+        slug: 'rss/feed.xml'
+      }),
       lastmod: dateNow,
       changefreq: 'daily',
       priority: '0.7'
     },
     {
-      loc: `${link}${locale}/tag`,
+      loc: buildSitemapLoc({
+        baseUrl: normalizedLink,
+        locale: normalizedLocale,
+        slug: 'search'
+      }),
+      lastmod: dateNow,
+      changefreq: 'daily',
+      priority: '0.7'
+    },
+    {
+      loc: buildSitemapLoc({
+        baseUrl: normalizedLink,
+        locale: normalizedLocale,
+        slug: 'tag'
+      }),
       lastmod: dateNow,
       changefreq: 'daily',
       priority: '0.7'
     }
-  ]
+  ].filter(field => Boolean(field?.loc))
+
   const postFields =
     allPages
       ?.filter(p => p.status === BLOG.NOTION_PROPERTY_NAME.status_publish)
+      // 过滤掉外部链接(http开头)和锚点链接(#开头)
+      ?.filter(
+        p => p.slug && !p.slug.startsWith('http') && !p.slug.startsWith('#')
+      )
       ?.map(post => {
-        const sitemapPath = getSitemapPath(post?.slug)
-        if (!sitemapPath) {
-          return null
-        }
+        const loc = buildSitemapLoc({
+          baseUrl: normalizedLink,
+          locale: normalizedLocale,
+          slug: post?.slug
+        })
+        if (!loc) return null
+
         return {
-          loc: `${link}${locale}/${sitemapPath}`,
-          lastmod: new Date(post?.publishDay).toISOString().split('T')[0],
+          loc,
+          lastmod: toSitemapDateString(post?.publishDay, dateNow),
           changefreq: 'daily',
           priority: '0.7'
         }
@@ -113,6 +154,4 @@ function getUniqueFields(fields) {
   return Array.from(uniqueFieldsMap.values())
 }
 
-const Sitemap = () => {}
-
-export default Sitemap
+export default () => {}

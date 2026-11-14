@@ -33,6 +33,7 @@ import SlotBar from './components/SlotBar'
 import TagItemMini from './components/TagItemMini'
 import TocDrawer from './components/TocDrawer'
 import TocDrawerButton from './components/TocDrawerButton'
+import ArticleSwitchPlaceholder from './components/ArticleSwitchPlaceholder'
 import CONFIG from './config'
 import { Style } from './style'
 
@@ -61,6 +62,14 @@ const LayoutBase = props => {
   const isDashboard = router.pathname === '/dashboard/[[...index]]'
   const shouldHideSidebar = hideSidebar || isDashboard
   const showRandomButton = siteConfig('HEXO_MENU_RANDOM', false, CONFIG)
+  const isArticleSlugPage = router.pathname === '/[prefix]/[slug]'
+  const hexoArticleRouteLoading = siteConfig(
+    'HEXO_ARTICLE_ROUTE_LOADING',
+    true,
+    CONFIG
+  )
+  const showArticleSwitchPlaceholder =
+    hexoArticleRouteLoading && isArticleSlugPage && onLoading
 
   const headerSlot = post ? (
     <PostHero {...props} />
@@ -84,7 +93,7 @@ const LayoutBase = props => {
           />
         </div>
       )}
-      {post && <ButtonJumpToComment />}
+      {post && <ButtonJumpToComment post={post} />}
       {showRandomButton && <ButtonRandomPostMini {...props} />}
     </>
   )
@@ -145,22 +154,26 @@ const LayoutBase = props => {
                     : 'max-w-4xl'
               } h-full overflow-hidden`}
             >
-              <Transition
-                show={!onLoading}
-                appear={true}
-                enter='transition ease-in-out duration-700 transform order-first'
-                enterFrom='opacity-0 translate-y-16'
-                enterTo='opacity-100'
-                leave='transition ease-in-out duration-300 transform'
-                leaveFrom='opacity-100 translate-y-0'
-                leaveTo='opacity-0 -translate-y-16'
-                unmount={false}
-              >
-                {/* 主区上部嵌入 */}
-                {slotTop}
+              {showArticleSwitchPlaceholder ? (
+                <ArticleSwitchPlaceholder />
+              ) : (
+                <Transition
+                  show={isArticleSlugPage ? true : !onLoading}
+                  appear={true}
+                  enter='transition ease-in-out duration-700 transform order-first'
+                  enterFrom='opacity-0 translate-y-16'
+                  enterTo='opacity-100'
+                  leave='transition ease-in-out duration-300 transform'
+                  leaveFrom='opacity-100 translate-y-0'
+                  leaveTo='opacity-0 -translate-y-16'
+                  unmount={false}
+                >
+                  {/* 主区上部嵌入 */}
+                  {slotTop}
 
-                {children}
-              </Transition>
+                  {children}
+                </Transition>
+              )}
             </div>
 
             {/* 右侧栏 */}
@@ -339,7 +352,9 @@ const Layout404 = props => {
 /**
  * 公开站点数据页
  */
-const LayoutDashboard = props => <DashboardBody pageIcons={props.analyticsPageIcons} />
+const LayoutDashboard = props => (
+  <DashboardBody pageIcons={props.analyticsPageIcons} />
+)
 
 /**
  * 分类列表
