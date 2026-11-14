@@ -2,6 +2,7 @@ import { filterCollectionViewData } from '@/lib/db/notion/filterCollectionViewDa
 
 const makeMap = () => ({
   block: {
+    'week-id': { value: { properties: { title: [['Week 1']] } } },
     row: {
       value: {
         properties: {
@@ -99,11 +100,11 @@ test('new group metadata renders category and relation groups using returned row
     map.collection_query.db.grouped['results:select:Reading'].blockIds
   ).toEqual(['row'])
   expect(
-    map.collection_query.db.weekly['results:relation:week-id'].blockIds
+    map.collection_query.db.weekly['results:relation:Week 1'].blockIds
   ).toEqual(['row'])
   expect(
     map.collection_view.weekly.value.format.collection_groups[0].value.value
-  ).toBe('week-id')
+  ).toBe('Week 1')
 })
 
 test('completed filters still exclude nonmatching records from synthesized groups', () => {
