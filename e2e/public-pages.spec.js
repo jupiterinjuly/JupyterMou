@@ -4,9 +4,9 @@ const publicPages = [
   { name: 'home', path: '/' },
   { name: 'about', path: '/about' },
   {
-    name: 'Tokyo gallery detail',
+    name: 'Osaka gallery detail',
     path: '/3d400ef7c8a0804fa239f7162cf1612b',
-    expectedText: '日本 · 东京'
+    expectedText: '日本 · 大阪'
   }
 ]
 
@@ -52,9 +52,9 @@ test('article image preview can be closed and reopened', async ({ page }) => {
     waitUntil: 'domcontentloaded'
   })
 
-  const image = page.locator(
-    '#notion-article img[alt="notion image"]:visible'
-  ).first()
+  const image = page
+    .locator('#notion-article img[alt="notion image"]:visible')
+    .first()
   await image.click({ trial: true })
   await expect(image).toHaveClass(/medium-zoom-image/)
 

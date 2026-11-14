@@ -38,10 +38,6 @@ export default function LazyImage(props) {
   const defaultPlaceholderSrc = siteConfig('IMG_LAZY_LOAD_PLACEHOLDER')
   const fallbackSrc =
     imageFallbackSrc || placeholderSrc || defaultPlaceholderSrc
-  const targetWidth =
-    Number(width) > 0
-      ? Math.min(Number(width), Number(maxWidth) || Number(width))
-      : maxWidth
   const imageRef = useRef(null)
   const attemptControllerRef = useRef(null)
   const [currentSrc, setCurrentSrc] = useState(fallbackSrc)
@@ -51,8 +47,8 @@ export default function LazyImage(props) {
   const [isZoomAttached, setIsZoomAttached] = useState(false)
 
   const adjustedImageSrc = useMemo(
-    () => adjustImgSize(normalizeNotionFileUrl(src), targetWidth),
-    [src, targetWidth]
+    () => adjustImgSize(normalizeNotionFileUrl(src), maxWidth),
+    [src, maxWidth]
   )
 
   useEffect(() => {
@@ -219,10 +215,7 @@ export default function LazyImage(props) {
     className: `${className || ''} ${
       loadState === 'loaded' ? '' : 'lazy-image-placeholder'
     } ${isZoomAttached ? 'medium-zoom-image' : ''}`,
-    style: {
-      aspectRatio: width && height ? `${width} / ${height}` : undefined,
-      ...style
-    },
+    style,
     onClick,
     loading: loading || (priority ? 'eager' : 'lazy'),
     decoding,
@@ -281,10 +274,9 @@ const adjustImgSize = (src, maxWidth) => {
   const screenWidth =
     (typeof window !== 'undefined' && window?.screen?.width) || maxWidth
 
-  const targetWidth =
-    Math.min(Number(screenWidth), Number(maxWidth)) || maxWidth
+  if (screenWidth > maxWidth) return src
 
   return src
-    .replace(/width=\d+/, `width=${targetWidth}`)
-    .replace(/w=\d+/, `w=${targetWidth}`)
+    .replace(/width=\d+/, `width=${screenWidth}`)
+    .replace(/w=\d+/, `w=${screenWidth}`)
 }

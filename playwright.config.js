@@ -15,6 +15,9 @@ module.exports = defineConfig({
     ['html', { outputFolder: 'playwright-report', open: 'never' }]
   ],
   use: {
+    launchOptions: {
+      executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+    },
     baseURL: remoteBaseURL || 'http://127.0.0.1:3100',
     locale: 'zh-CN',
     timezoneId: 'Asia/Shanghai',
