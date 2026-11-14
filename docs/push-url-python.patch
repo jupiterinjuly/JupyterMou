@@ -1,0 +1,17 @@
+diff --git a/.github/workflows/pushUrl.yml b/.github/workflows/pushUrl.yml
+index e0bc3ac9..375e502c 100644
+--- a/.github/workflows/pushUrl.yml
++++ b/.github/workflows/pushUrl.yml
+@@ -27,10 +27,10 @@ jobs:
+         uses: actions/checkout@v4
+       # - name: 'Run baiduPush' # 步骤二，执行sh命令文件
+       #   run: npm install && npm run baiduPush # 运行目录是仓库根目录
+-      - name: Set up Python 3.8
++      - name: Set up Python
+         uses: actions/setup-python@v5
+         with:
+-          python-version: 3.8
++          python-version: '3.x'
+ 
+       - name: Install requests
+         run: pip install requests

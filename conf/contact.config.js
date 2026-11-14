@@ -16,6 +16,9 @@ module.exports = {
   CONTACT_LINKEDIN:
     process.env.NEXT_PUBLIC_CONTACT_LINKEDIN ||
     'https://www.linkedin.com/in/xinyi-mou-3457a7387/', // 你的linkedIn 首页
+  CONTACT_ORCID: process.env.NEXT_PUBLIC_CONTACT_ORCID || '',
+  CONTACT_CSDN: process.env.NEXT_PUBLIC_CONTACT_CSDN || '',
+  CONTACT_JUEJIN: process.env.NEXT_PUBLIC_CONTACT_JUEJIN || '',
   CONTACT_INSTAGRAM:
     process.env.NEXT_PUBLIC_CONTACT_INSTAGRAM ||
     'https://www.instagram.com/jupiter_injuly/', // 您的instagram地址

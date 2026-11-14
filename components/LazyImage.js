@@ -17,6 +17,7 @@ export default function LazyImage(props) {
     id,
     src,
     alt,
+    fallbackSrc: imageFallbackSrc,
     placeholderSrc,
     className,
     width,
@@ -35,7 +36,8 @@ export default function LazyImage(props) {
   } = props
   const maxWidth = siteConfig('IMAGE_COMPRESS_WIDTH')
   const defaultPlaceholderSrc = siteConfig('IMG_LAZY_LOAD_PLACEHOLDER')
-  const fallbackSrc = placeholderSrc || defaultPlaceholderSrc
+  const fallbackSrc =
+    imageFallbackSrc || placeholderSrc || defaultPlaceholderSrc
   const imageRef = useRef(null)
   const attemptControllerRef = useRef(null)
   const [currentSrc, setCurrentSrc] = useState(fallbackSrc)

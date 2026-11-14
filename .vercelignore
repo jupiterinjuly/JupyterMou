@@ -1,0 +1,10 @@
+docs
+.vitepress
+_project-ai
+__tests__
+e2e
+playwright-report
+test-results
+cloudflare
+functions
+tools

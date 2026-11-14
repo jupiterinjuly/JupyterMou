@@ -1,9 +1,12 @@
 import BLOG from '@/blog.config'
 import { siteConfig } from '@/lib/config'
-import { fetchGlobalAllData, resolvePostProps } from '@/lib/db/SiteDataApi'
-import { checkSlugHasMorThanTwoSlash, processPostData } from '@/lib/utils/post'
-import { idToUuid } from 'notion-utils'
+import { resolvePostProps } from '@/lib/db/SiteDataApi'
+import { getStaticPathsBase } from '@/lib/build/staticPaths'
+import { isExport } from '@/lib/utils/buildMode'
+import { checkSlugHasMorThanTwoSlash } from '@/lib/utils/post'
 import Slug from '..'
+
+const isStaticExport = process.env.EXPORT === 'true'
 
 /**
  * 根据notion的slug访问页面
@@ -15,33 +18,18 @@ const PrefixSlug = props => {
   return <Slug {...props} />
 }
 
-/**
- * 编译渲染页面路径
- * @returns
- */
 export async function getStaticPaths() {
-  if (!BLOG.isProd) {
-    return {
-      paths: [],
-      fallback: 'blocking'
-    }
-  }
-
-  const from = 'slug-paths'
-  const { allPages } = await fetchGlobalAllData({ from })
-  const paths = allPages
-    ?.filter(row => checkSlugHasMorThanTwoSlash(row))
-    .map(row => ({
+  return getStaticPathsBase({
+    from: 'slug-paths',
+    filterFn: row => checkSlugHasMorThanTwoSlash(row),
+    mapPageToParams: row => ({
       params: {
         prefix: row.slug.split('/')[0],
         slug: row.slug.split('/')[1],
         suffix: row.slug.split('/').slice(2)
       }
-    }))
-  return {
-    paths: paths,
-    fallback: 'blocking'
-  }
+    })
+  })
 }
 
 /**
@@ -51,46 +39,27 @@ export async function getStaticPaths() {
  */
 export async function getStaticProps({
   params: { prefix, slug, suffix },
-  locale
+  locale,
+  revalidateReason
 }) {
-  const lastSegment = suffix?.[suffix.length - 1] || slug
-  if (
-    /\.(?:woff2?|ttf|otf|css|js|map|png|jpe?g|gif|svg|webp|ico)$/i.test(
-      lastSegment
-    )
-  ) {
-    return { notFound: true }
-  }
-
   const props = await resolvePostProps({
     prefix,
     slug,
     suffix,
-    locale
+    locale,
+    revalidateReason
   })
-
-  if (!props?.post) {
-    return {
-      notFound: true,
-      revalidate: process.env.EXPORT
-        ? undefined
-        : siteConfig(
-            'NEXT_REVALIDATE_SECOND',
-            BLOG.NEXT_REVALIDATE_SECOND,
-            props.NOTION_CONFIG
-          )
-    }
-  }
 
   return {
     props,
-    revalidate: process.env.EXPORT
+    revalidate: isStaticExport
       ? undefined
       : siteConfig(
           'NEXT_REVALIDATE_SECOND',
           BLOG.NEXT_REVALIDATE_SECOND,
           props.NOTION_CONFIG
-        )
+        ),
+    notFound: !props.post
   }
 }
 
