@@ -80,7 +80,7 @@ test('shows section snippets and links to the matching article heading', async (
         slug: 'article/long',
         section: '附录',
         anchor: 'heading123',
-        _snippetResult: { content: { value: '文章末尾独有关键词' } }
+        _snippetResult: { content: { value: '<em>文章末尾</em>独有关键词' } }
       }
     ]
   })

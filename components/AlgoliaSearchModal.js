@@ -4,6 +4,7 @@ import { useGlobal } from '@/lib/global'
 import algoliasearch from 'algoliasearch'
 import SmartLink from '@/components/SmartLink'
 import { getSearchResultHref } from '@/lib/search/resultLink'
+import { getSearchSnippet } from '@/lib/search/snippet'
 import { useRouter } from 'next/router'
 import {
   Fragment,
@@ -275,8 +276,8 @@ export default function AlgoliaSearchModal({ cRef }) {
           distinct: true,
           attributesToSnippet: ['content:40'],
           attributesToHighlight: [],
-          highlightPreTag: '',
-          highlightPostTag: ''
+          highlightPreTag: '<em>',
+          highlightPostTag: '</em>'
         }
       )
       if (version !== requestVersion.current) return
@@ -432,8 +433,7 @@ export default function AlgoliaSearchModal({ cRef }) {
                 )}
                 {(result._snippetResult?.content?.value || result.content) && (
                   <span className='block text-sm opacity-80 mt-1 leading-relaxed line-clamp-3'>
-                    {result._snippetResult?.content?.value ||
-                      result.content.slice(0, 160)}
+                    {getSearchSnippet(result)}
                   </span>
                 )}
               </a>
