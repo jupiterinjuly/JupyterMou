@@ -10,7 +10,8 @@ import { Transition } from '@headlessui/react'
 import dynamic from 'next/dynamic'
 import SmartLink from '@/components/SmartLink'
 import { useRouter } from 'next/router'
-import { createContext, useContext, useEffect, useRef } from 'react'
+import { createContext, useContext, useEffect, useMemo, useRef } from 'react'
+import { createSearchModalRef } from '@/lib/search/modalRef'
 import ArticleAdjacent from './components/ArticleAdjacent'
 import ArticleCopyright from './components/ArticleCopyright'
 import { ArticleLock } from './components/ArticleLock'
@@ -99,7 +100,7 @@ const LayoutBase = props => {
   )
 
   // Algolia搜索框
-  const searchModal = useRef(null)
+  const searchModal = useMemo(() => createSearchModalRef(), [])
 
   return (
     <ThemeGlobalHexo.Provider value={{ searchModal }}>

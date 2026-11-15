@@ -14,7 +14,7 @@ export default function SearchButton(props) {
 
   function handleSearch() {
     if (siteConfig('ALGOLIA_APP_ID')) {
-      searchModal.current.openSearch()
+      searchModal.openSearch()
     } else {
       router.push('/search')
     }

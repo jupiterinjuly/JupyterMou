@@ -23,5 +23,7 @@ test('searches the end of a long article and opens its original heading', async 
       url.pathname === '/article/uncertainty-ocr-iclr2026-zh' &&
       Boolean(url.hash)
   )
-  await expect(page.locator(`[id="${href.split('#')[1]}"]`)).toBeInViewport()
+  await expect(
+    page.locator(`[id="${href.split('#')[1]}"]`).locator('..')
+  ).toBeInViewport()
 })
