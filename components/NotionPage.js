@@ -4,6 +4,7 @@ import NotionEmbed from '@/components/NotionEmbed'
 import NotionHtmlEmbed from '@/components/NotionHtmlEmbed'
 import LazyImage from '@/components/LazyImage'
 import { normalizeRecordMap } from '@/lib/db/notion/normalizeRecordMap'
+import { stabilizeArticleHash } from '@/lib/notion/scrollToHash'
 import NotionLink from '@/components/NotionLink'
 import { isBrowser, loadExternalResource } from '@/lib/utils'
 import mediumZoom from '@fisch0920/medium-zoom'
@@ -34,11 +35,16 @@ const NotionPage = ({ post, className }) => {
   const zoomOwnerId = useId()
   const zoomSequence = useRef(0)
   const IMAGE_ZOOM_IN_WIDTH = siteConfig('IMAGE_ZOOM_IN_WIDTH', 1200)
+  const hasBlockMap = Boolean(post?.blockMap)
   // 页面首次打开时执行的勾子
   useEffect(() => {
     // 检测当前的url并自动滚动到对应目标
-    autoScrollToHash()
-  }, [])
+    let stop = () => {}
+    const jump = () => { stop(); stop = stabilizeArticleHash(articleRef.current) }
+    jump()
+    window.addEventListener('hashchange', jump)
+    return () => { stop(); window.removeEventListener('hashchange', jump) }
+  }, [post?.id, hasBlockMap])
 
   // 页面文章发生变化时会执行的勾子
   useEffect(() => {
@@ -257,21 +263,6 @@ const processGalleryImg = zoom => {
 /**
  * 根据url参数自动滚动到锚位置
  */
-const autoScrollToHash = () => {
-  setTimeout(() => {
-    // 跳转到指定标题
-    const hash = window?.location?.hash
-    const needToJumpToTitle = hash && hash.length > 0
-    if (needToJumpToTitle) {
-      console.log('jump to hash', hash)
-      const tocNode = document.getElementById(hash.substring(1))
-      if (tocNode && tocNode?.className?.indexOf('notion') > -1) {
-        tocNode.scrollIntoView({ block: 'start', behavior: 'smooth' })
-      }
-    }
-  }, 180)
-}
-
 /**
  * 将id映射成博文内部链接。
  * @param {*} id
