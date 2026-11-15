@@ -3,6 +3,7 @@ import { siteConfig } from '@/lib/config'
 import { useGlobal } from '@/lib/global'
 import algoliasearch from 'algoliasearch'
 import SmartLink from '@/components/SmartLink'
+import { getSearchResultHref } from '@/lib/search/resultLink'
 import { useRouter } from 'next/router'
 import {
   Fragment,
@@ -66,9 +67,13 @@ export default function AlgoliaSearchModal({ cRef }) {
   const appId = siteConfig('ALGOLIA_APP_ID')
   const searchKey = siteConfig('ALGOLIA_SEARCH_ONLY_APP_KEY')
   const indexName = siteConfig('ALGOLIA_INDEX')
-  const index = useMemo(() => appId && searchKey && indexName
-    ? algoliasearch(appId, searchKey).initIndex(indexName) : null,
-  [appId, searchKey, indexName])
+  const index = useMemo(
+    () =>
+      appId && searchKey && indexName
+        ? algoliasearch(appId, searchKey).initIndex(indexName)
+        : null,
+    [appId, searchKey, indexName]
+  )
   const hasSearchIndex = Boolean(index)
 
   const closeModal = useCallback(() => {
@@ -134,11 +139,14 @@ export default function AlgoliaSearchModal({ cRef }) {
     { enableOnFormTags: true }
   )
   // 跳转Search结果
-  const onJumpSearchResult = (targetIndex) => {
+  const onJumpSearchResult = targetIndex => {
     const i = targetIndex !== undefined ? targetIndex : activeIndex
     if (searchResults.length > 0 && searchResults[i]) {
       const searchResult = searchResults[i]
-      window.location.href = `${siteConfig('SUB_PATH', '')}/${searchResult.slug || searchResult.objectID}`
+      window.location.href = getSearchResultHref(
+        searchResult,
+        siteConfig('SUB_PATH', '')
+      )
     }
   }
 
@@ -182,19 +190,31 @@ export default function AlgoliaSearchModal({ cRef }) {
       }
       if (event.key !== 'Tab') return
       // Re-read after results, retries and pagination change the available controls.
-      const focusable = Array.from(dialog.querySelectorAll(
-        'a[href], button:not(:disabled), input:not(:disabled), [tabindex]:not([tabindex="-1"])'
-      )).filter(element => element.tabIndex >= 0 && !element.closest('[hidden], [inert], [aria-hidden="true"]'))
+      const focusable = Array.from(
+        dialog.querySelectorAll(
+          'a[href], button:not(:disabled), input:not(:disabled), [tabindex]:not([tabindex="-1"])'
+        )
+      ).filter(
+        element =>
+          element.tabIndex >= 0 &&
+          !element.closest('[hidden], [inert], [aria-hidden="true"]')
+      )
       const first = focusable[0]
       const last = focusable[focusable.length - 1]
       const outside = !dialog.contains(document.activeElement)
       if (!first) {
         event.preventDefault()
         dialog.focus()
-      } else if (event.shiftKey && (document.activeElement === first || outside)) {
+      } else if (
+        event.shiftKey &&
+        (document.activeElement === first || outside)
+      ) {
         event.preventDefault()
         last.focus()
-      } else if (!event.shiftKey && (document.activeElement === last || outside)) {
+      } else if (
+        !event.shiftKey &&
+        (document.activeElement === last || outside)
+      ) {
         event.preventDefault()
         first.focus()
       }
@@ -247,7 +267,18 @@ export default function AlgoliaSearchModal({ cRef }) {
     setIsLoading(Boolean(query && index))
     if (!query || !index) return
     try {
-      const { hits, nbHits, nbPages, processingTimeMS } = await index.search(query, { page, hitsPerPage: 10 })
+      const { hits, nbHits, nbPages, processingTimeMS } = await index.search(
+        query,
+        {
+          page,
+          hitsPerPage: 10,
+          distinct: true,
+          attributesToSnippet: ['content:40'],
+          attributesToHighlight: [],
+          highlightPreTag: '',
+          highlightPostTag: ''
+        }
+      )
       if (version !== requestVersion.current) return
       setUseTime(processingTimeMS)
       setTotalPage(nbPages)
@@ -255,11 +286,22 @@ export default function AlgoliaSearchModal({ cRef }) {
       setSearchResults(hits)
       highlightTimer.current = setTimeout(() => {
         if (version !== requestVersion.current) return
-        const doms = document.getElementById('search-wrapper')?.getElementsByClassName('replace')
-        if (doms) replaceSearchResult({ doms, search: query, target: { element: 'span', className: 'font-bold border-b border-dashed' } })
+        const doms = document
+          .getElementById('search-wrapper')
+          ?.getElementsByClassName('replace')
+        if (doms)
+          replaceSearchResult({
+            doms,
+            search: query,
+            target: {
+              element: 'span',
+              className: 'font-bold border-b border-dashed'
+            }
+          })
       }, 0)
     } catch {
-      if (version === requestVersion.current) setSearchError('搜索暂时不可用，请重试。')
+      if (version === requestVersion.current)
+        setSearchError('搜索暂时不可用，请重试。')
     } finally {
       if (version === requestVersion.current) setIsLoading(false)
     }
@@ -276,7 +318,9 @@ export default function AlgoliaSearchModal({ cRef }) {
       resetSearch()
       return
     }
-    searchTimer.current = setTimeout(() => { void handleSearch(query) }, 600)
+    searchTimer.current = setTimeout(() => {
+      void handleSearch(query)
+    }, 600)
   }
 
   const switchPage = page => handleSearch(keyword, page)
@@ -291,7 +335,8 @@ export default function AlgoliaSearchModal({ cRef }) {
       inert={isModalOpen ? undefined : ''}
       className={`${
         isModalOpen ? 'opacity-100' : 'invisible opacity-0 pointer-events-none'
-      } z-30 fixed h-screen w-screen left-0 top-0 sm:mt-[10vh] flex items-start justify-center mt-0`}>
+      } z-30 fixed h-screen w-screen left-0 top-0 sm:mt-[10vh] flex items-start justify-center mt-0`}
+    >
       {/* 模态框 */}
       <div
         ref={dialogRef}
@@ -301,15 +346,22 @@ export default function AlgoliaSearchModal({ cRef }) {
         tabIndex={-1}
         className={`${
           isModalOpen ? 'opacity-100' : 'invisible opacity-0 translate-y-10'
-        } max-h-[80vh] flex flex-col justify-between w-full min-h-[10rem] h-full md:h-fit max-w-xl dark:bg-hexo-black-gray dark:border-gray-800 bg-white dark:bg- p-5 rounded-lg z-50 shadow border hover:border-blue-600 duration-300 transition-all `}>
+        } max-h-[80vh] flex flex-col justify-between w-full min-h-[10rem] h-full md:h-fit max-w-xl dark:bg-hexo-black-gray dark:border-gray-800 bg-white dark:bg- p-5 rounded-lg z-50 shadow border hover:border-blue-600 duration-300 transition-all `}
+      >
         <div className='flex justify-between items-center'>
-          <div id={titleId} className='text-2xl text-blue-600 dark:text-yellow-600 font-bold'>
+          <div
+            id={titleId}
+            className='text-2xl text-blue-600 dark:text-yellow-600 font-bold'
+          >
             搜索
           </div>
           <div>
-            <button type='button' aria-label='关闭搜索'
+            <button
+              type='button'
+              aria-label='关闭搜索'
               className='text-gray-600 fa-solid fa-xmark p-1 cursor-pointer hover:text-blue-600'
-              onClick={closeModal} />
+              onClick={closeModal}
+            />
           </div>
         </div>
 
@@ -328,17 +380,37 @@ export default function AlgoliaSearchModal({ cRef }) {
         <div className='mb-4'>
           <TagGroups />
         </div>
-        {isLoading && <p role='status' className='text-center text-gray-500'>正在搜索…</p>}
-        {searchError && <p role='alert' className='text-center text-red-600'>{searchError} <button type='button' className='underline' onClick={() => { void handleSearch(keyword, page) }}>重试</button></p>}
-        {searchResults.length === 0 && keyword && !isLoading && !searchError && (
-          <div>
-            <p className=' text-slate-600 text-center my-4 text-base'>
-              {' '}
-              无法找到相关结果
-              <span className='font-semibold'>&quot;{keyword}&quot;</span>
-            </p>
-          </div>
+        {isLoading && (
+          <p role='status' className='text-center text-gray-500'>
+            正在搜索…
+          </p>
         )}
+        {searchError && (
+          <p role='alert' className='text-center text-red-600'>
+            {searchError}{' '}
+            <button
+              type='button'
+              className='underline'
+              onClick={() => {
+                void handleSearch(keyword, page)
+              }}
+            >
+              重试
+            </button>
+          </p>
+        )}
+        {searchResults.length === 0 &&
+          keyword &&
+          !isLoading &&
+          !searchError && (
+            <div>
+              <p className=' text-slate-600 text-center my-4 text-base'>
+                {' '}
+                无法找到相关结果
+                <span className='font-semibold'>&quot;{keyword}&quot;</span>
+              </p>
+            </div>
+          )}
         <ul className='flex-1 overflow-auto'>
           {searchResults.map((result, index) => (
             <li
@@ -346,11 +418,24 @@ export default function AlgoliaSearchModal({ cRef }) {
               onMouseEnter={() => setActiveIndex(index)}
               className={`cursor-pointer replace my-2 duration-100
               rounded-lg
-              ${activeIndex === index ? 'bg-blue-600 dark:bg-yellow-600' : ''}`}>
+              ${activeIndex === index ? 'bg-blue-600 dark:bg-yellow-600' : ''}`}
+            >
               <a
-                href={`${siteConfig('SUB_PATH', '')}/${result.slug || result.objectID}`}
-                className={`block p-2 ${activeIndex === index ? ' text-white' : ' text-black dark:text-gray-300 '}`}>
-                {result.title}
+                href={getSearchResultHref(result, siteConfig('SUB_PATH', ''))}
+                className={`block p-2 ${activeIndex === index ? ' text-white' : ' text-black dark:text-gray-300 '}`}
+              >
+                <span className='block font-medium'>{result.title}</span>
+                {result.section && (
+                  <span className='block text-sm opacity-80 mt-1'>
+                    {result.section}
+                  </span>
+                )}
+                {(result._snippetResult?.content?.value || result.content) && (
+                  <span className='block text-sm opacity-80 mt-1 leading-relaxed line-clamp-3'>
+                    {result._snippetResult?.content?.value ||
+                      result.content.slice(0, 160)}
+                  </span>
+                )}
               </a>
             </li>
           ))}
@@ -413,11 +498,13 @@ function TagGroups() {
             passHref
             key={index}
             href={`/tag/${encodeURIComponent(tag.name)}`}
-            className={'cursor-pointer inline-block whitespace-nowrap'}>
+            className={'cursor-pointer inline-block whitespace-nowrap'}
+          >
             <div
               className={
                 'flex items-center text-black dark:text-gray-300 hover:bg-blue-600 dark:hover:bg-yellow-600 hover:scale-110 hover:text-white rounded-lg px-2 py-0.5 duration-150 transition-all'
-              }>
+              }
+            >
               <div className='text-lg'>{tag.name} </div>
               {tag.count ? (
                 <sup className='relative ml-1'>{tag.count}</sup>
@@ -456,7 +543,8 @@ function Pagination(props) {
             aria-current={page === i ? 'page' : undefined}
             onClick={() => switchPage(i)}
             className={`text-center cursor-pointer w-6 h-6 ${classNames}`}
-            key={i}>
+            key={i}
+          >
             {i + 1}
           </button>
         )

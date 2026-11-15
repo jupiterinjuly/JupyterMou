@@ -68,6 +68,42 @@ afterEach(() => {
   jest.useRealTimers()
 })
 
+test('shows section snippets and links to the matching article heading', async () => {
+  jest.useFakeTimers()
+  mockSearch.mockResolvedValue({
+    ...result('长文命中'),
+    hits: [
+      {
+        objectID: 'post:8',
+        postId: 'post',
+        title: '长文命中',
+        slug: 'article/long',
+        section: '附录',
+        anchor: 'heading123',
+        _snippetResult: { content: { value: '文章末尾独有关键词' } }
+      }
+    ]
+  })
+  const ref = createRef()
+  const { unmount } = render(<AlgoliaSearchModal cRef={ref} />)
+  act(() => ref.current.openSearch())
+  fireEvent.change(screen.getByRole('textbox'), {
+    target: { value: '独有关键词' }
+  })
+  await flushUpdates(() => jest.advanceTimersByTime(700))
+  expect(screen.getByRole('link', { name: /长文命中/ })).toHaveAttribute(
+    'href',
+    '/article/long#heading123'
+  )
+  expect(screen.getByText('附录')).toBeVisible()
+  expect(screen.getByText('文章末尾独有关键词')).toBeVisible()
+  expect(mockSearch).toHaveBeenCalledWith(
+    '独有关键词',
+    expect.objectContaining({ distinct: true })
+  )
+  unmount()
+})
+
 test('leaves Ctrl+K available to local search when Algolia is not configured', () => {
   delete mockConfig.ALGOLIA_APP_ID
   delete mockConfig.ALGOLIA_SEARCH_ONLY_APP_KEY
@@ -254,15 +290,27 @@ test.each(['关闭搜索', 'topic', '第 2 页'])(
     mockTagOptions = [{ name: 'topic' }]
     mockSearch.mockResolvedValue({ ...result('RESULT'), nbPages: 2 })
     const ref = createRef()
-    render(<><button>Open search</button><AlgoliaSearchModal cRef={ref} /></>)
+    render(
+      <>
+        <button>Open search</button>
+        <AlgoliaSearchModal cRef={ref} />
+      </>
+    )
     const opener = screen.getByRole('button', { name: 'Open search' })
     act(() => opener.focus())
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     act(() => ref.current.openSearch())
-    expect(screen.getByRole('dialog', { name: '搜索' })).toHaveAttribute('aria-modal', 'true')
-    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'query' } })
+    expect(screen.getByRole('dialog', { name: '搜索' })).toHaveAttribute(
+      'aria-modal',
+      'true'
+    )
+    fireEvent.change(screen.getByRole('textbox'), {
+      target: { value: 'query' }
+    })
     await flushUpdates(() => jest.advanceTimersByTime(700))
-    const target = screen.getByRole(name === 'topic' ? 'link' : 'button', { name })
+    const target = screen.getByRole(name === 'topic' ? 'link' : 'button', {
+      name
+    })
     act(() => target.focus())
     expect(target).toHaveFocus()
     fireEvent.keyDown(target, { key: 'Escape', code: 'Escape' })
@@ -294,7 +342,13 @@ test('Tab stays inside search, includes new results, and releases focus after cl
   mockTagOptions = [{ name: 'topic' }]
   mockSearch.mockResolvedValue({ ...result('RESULT'), nbPages: 2 })
   const ref = createRef()
-  render(<><button>Open search</button><button>Outside</button><AlgoliaSearchModal cRef={ref} /></>)
+  render(
+    <>
+      <button>Open search</button>
+      <button>Outside</button>
+      <AlgoliaSearchModal cRef={ref} />
+    </>
+  )
   const opener = screen.getByRole('button', { name: 'Open search' })
   const outside = screen.getByRole('button', { name: 'Outside' })
   act(() => opener.focus())
@@ -339,7 +393,12 @@ test('changing the index invalidates pending results without losing the focus re
   const pending = deferred()
   mockSearch.mockReturnValue(pending.promise)
   const ref = createRef()
-  const view = <><button>Open search</button><AlgoliaSearchModal cRef={ref} /></>
+  const view = (
+    <>
+      <button>Open search</button>
+      <AlgoliaSearchModal cRef={ref} />
+    </>
+  )
   const { rerender } = render(view)
   const opener = screen.getByRole('button', { name: 'Open search' })
   act(() => opener.focus())
@@ -347,7 +406,12 @@ test('changing the index invalidates pending results without losing the focus re
   fireEvent.change(screen.getByRole('textbox'), { target: { value: 'query' } })
   await flushUpdates(() => jest.advanceTimersByTime(600))
   mockConfig.ALGOLIA_INDEX = 'another-index'
-  rerender(<><button>Open search</button><AlgoliaSearchModal cRef={ref} /></>)
+  rerender(
+    <>
+      <button>Open search</button>
+      <AlgoliaSearchModal cRef={ref} />
+    </>
+  )
   await flushUpdates(() => pending.resolve(result('STALE_RESULT')))
   expect(screen.queryByText('STALE_RESULT')).not.toBeInTheDocument()
   fireEvent.click(screen.getByRole('button', { name: '关闭搜索' }))
@@ -358,10 +422,13 @@ test.each(['route', 'configuration', 'unmount'])(
   'restores and releases focus when search closes because of %s',
   reason => {
     const ref = createRef()
-    const view = showModal => <>
-      <button>Open search</button><button>Outside</button>
-      {showModal && <AlgoliaSearchModal cRef={ref} />}
-    </>
+    const view = showModal => (
+      <>
+        <button>Open search</button>
+        <button>Outside</button>
+        {showModal && <AlgoliaSearchModal cRef={ref} />}
+      </>
+    )
     const { rerender } = render(view(true))
     const opener = screen.getByRole('button', { name: 'Open search' })
     const outside = screen.getByRole('button', { name: 'Outside' })
@@ -397,10 +464,13 @@ test('fetches the selected page using the current keyword', async () => {
   })
   await flushUpdates(() => jest.advanceTimersByTime(700))
   await flushUpdates(() => fireEvent.click(screen.getByText('2')))
-  expect(mockSearch).toHaveBeenLastCalledWith('query', {
-    page: 1,
-    hitsPerPage: 10
-  })
+  expect(mockSearch).toHaveBeenLastCalledWith(
+    'query',
+    expect.objectContaining({
+      page: 1,
+      hitsPerPage: 10
+    })
+  )
   expect(screen.getByText('PAGE_TWO')).toBeInTheDocument()
   expect(screen.queryByText('PAGE_ONE')).not.toBeInTheDocument()
 })
