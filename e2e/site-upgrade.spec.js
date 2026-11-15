@@ -20,7 +20,7 @@ test('home keeps the personal layout and hides database metadata', async ({
       .evaluateAll(links => links.map(link => link.href))
   await expect
     .poll(fontUrls)
-    .toContain('https://npm.elemecdn.com/lxgw-wenkai-webfont@1.6.0/style.css')
+    .toContain(new URL('/fonts/lxgw-wenkai-1.6.0/style.css', page.url()).href)
   expect(
     (await fontUrls()).some(url => url.includes('fonts.googleapis.com'))
   ).toBe(false)

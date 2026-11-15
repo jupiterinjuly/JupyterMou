@@ -2,6 +2,16 @@
   "cleanUrls": false,
   "trailingSlash": false,
   "ignoreCommand": "case \"$VERCEL_GIT_COMMIT_MESSAGE\" in *\"[skip-version]\"*) exit 0;; *) exit 1;; esac",
-  "headers": [],
+  "headers": [
+    {
+      "source": "/fonts/lxgw-wenkai-1.6.0/:path*",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ],
   "crons": [{ "path": "/api/search/reindex", "schedule": "0 20 * * *" }]
 }

@@ -9,7 +9,7 @@ module.exports = {
   FONT_STYLE: process.env.NEXT_PUBLIC_FONT_STYLE || 'font-sans font-light',
   // 字体CSS 例如 https://npm.elemecdn.com/lxgw-wenkai-webfont@1.6.0/style.css
   FONT_URL: process.env.NEXT_PUBLIC_FONT_URL || [
-    'https://npm.elemecdn.com/lxgw-wenkai-webfont@1.6.0/style.css'
+    '/fonts/lxgw-wenkai-1.6.0/style.css'
   ],
 
   // 字体优化配置

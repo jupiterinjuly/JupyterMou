@@ -3,10 +3,10 @@ import { useGlobal } from '@/lib/global'
 import { getPwaConfig } from '@/lib/pwa'
 import { getArticleSeoMeta, isSearchRoute } from '@/lib/utils/seo'
 import { createSiteUrl, normalizeSiteUrl } from '@/lib/sitemap-utils'
-import { isHttpLink, loadExternalResource } from '@/lib/utils'
+import { isHttpLink } from '@/lib/utils'
+import { resolveFontUrls } from '@/lib/utils/fontUrls'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
-import { useEffect } from 'react'
 
 /**
  * 页面的Head头，有用于SEO
@@ -24,36 +24,8 @@ const SEO = props => {
   let image
   const router = useRouter()
   const meta = getSEOMeta(props, router, useGlobal()?.locale)
-  const webFontUrl = siteConfig('FONT_URL')
-  const hasWebFontUrl = Array.isArray(webFontUrl)
-    ? webFontUrl.filter(Boolean).length > 0
-    : Boolean(webFontUrl)
+  const webFontUrl = resolveFontUrls(siteConfig('FONT_URL'))
   const hasGoogleFontsUrl = containsGoogleFontsUrl(webFontUrl)
-
-  useEffect(() => {
-    if (!hasWebFontUrl) return
-
-    const timeoutId = window.setTimeout(() => {
-      // 使用WebFontLoader字体加载
-      loadExternalResource(
-        'https://cdnjs.cloudflare.com/ajax/libs/webfont/1.6.28/webfontloader.js',
-        'js'
-      ).then(url => {
-        const WebFont = window?.WebFont
-        if (WebFont) {
-          // console.log('LoadWebFont', webFontUrl)
-          WebFont.load({
-            custom: {
-              // families: ['"LXGW WenKai"'],
-              urls: webFontUrl
-            }
-          })
-        }
-      })
-    }, 1500)
-
-    return () => window.clearTimeout(timeoutId)
-  }, [hasWebFontUrl, webFontUrl])
 
   // SEO关键词
   const KEYWORDS = siteConfig('KEYWORDS')
@@ -133,6 +105,9 @@ const SEO = props => {
   const AUTHOR = siteConfig('AUTHOR')
   return (
     <Head>
+      {webFontUrl.map(href => (
+        <link key={href} rel='stylesheet' href={href} />
+      ))}
       <link rel='icon' href={favicon} />
       <title>{title}</title>
       <meta
