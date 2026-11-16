@@ -4,6 +4,7 @@ test('actually renders Chinese headings with the original WenKai webfont', async
   page
 }) => {
   await page.goto('/', { waitUntil: 'domcontentloaded' })
+  await page.locator('#theme-hexo h2 a').first().waitFor()
   await page.evaluate(() =>
     document.fonts.load(
       '700 24px "LXGW WenKai"',
@@ -16,7 +17,7 @@ test('actually renders Chinese headings with the original WenKai webfont', async
   const { root } = await client.send('DOM.getDocument')
   const { nodeId } = await client.send('DOM.querySelector', {
     nodeId: root.nodeId,
-    selector: '#theme-hexo h2'
+    selector: '#theme-hexo h2 a'
   })
   const { fonts } = await client.send('CSS.getPlatformFontsForNode', { nodeId })
   expect(
