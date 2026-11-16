@@ -28,6 +28,7 @@ function response() {
     off: jest.fn()
   }
 }
+let requestId = 0
 const request = (body = {}) => ({
   method: 'POST',
   headers: {
@@ -36,7 +37,7 @@ const request = (body = {}) => ({
     'content-type': 'application/json'
   },
   body: { question: 'OCR 的不确定性是什么？', scope: 'site', ...body },
-  socket: { remoteAddress: 'fixture-api' }
+  socket: { remoteAddress: `fixture-api-${++requestId}` }
 })
 
 beforeEach(() => {
@@ -113,4 +114,88 @@ test('returns answers through server-owned retrieval path', async () => {
     sources: [],
     grounded: false
   })
+  expect(answerFromPassages.mock.calls[0][2]).toEqual([
+    expect.objectContaining({
+      id: 1,
+      href: '/',
+      section: '网站介绍（非单篇文章）'
+    })
+  ])
+})
+
+test.each([
+  '这是什么网页？',
+  '这是一个什么样的博客？',
+  '博主是谁？',
+  '你是谁？'
+])(
+  'introduces the blog without retrieval or model calls: %s',
+  async question => {
+    const res = response()
+    await handler(request({ question }), res)
+    expect(res.status).toHaveBeenCalledWith(200)
+    expect(res.json.mock.calls[0][0]).toMatchObject({
+      answer: expect.stringContaining('JupyterMou 的个人博客'),
+      kind: 'site-guide',
+      sources: [expect.objectContaining({ href: '/' })]
+    })
+    expect(fetchGlobalAllData).not.toHaveBeenCalled()
+    expect(rewriteQueries).not.toHaveBeenCalled()
+    expect(answerFromPassages).not.toHaveBeenCalled()
+  }
+)
+
+test('asks for an article on homepage instead of selecting a random search hit', async () => {
+  const res = response()
+  await handler(request({ question: '这篇文章主要讲了什么？' }), res)
+  expect(res.json.mock.calls[0][0]).toMatchObject({
+    kind: 'clarification',
+    sources: []
+  })
+  expect(rewriteQueries).not.toHaveBeenCalled()
+})
+
+test('recommends only matching public articles, without searching or generating', async () => {
+  fetchGlobalAllData.mockResolvedValue({
+    allPages: [
+      {
+        id: 'a'.repeat(32),
+        title: 'OCR 阅读笔记',
+        category: '文献研究',
+        type: 'Post',
+        status: 'Published',
+        slug: 'article/ocr-notes'
+      },
+      {
+        id: 'b'.repeat(32),
+        title: 'OCR 私密笔记',
+        category: '文献研究',
+        type: 'Post',
+        status: 'Published',
+        password: 'secret'
+      },
+      { id: 'c'.repeat(32), title: 'OCR 草稿', type: 'Post', status: 'Draft' },
+      {
+        id: 'd'.repeat(32),
+        title: '旅行随笔',
+        category: '心情随笔',
+        type: 'Post',
+        status: 'Published'
+      }
+    ]
+  })
+  const res = response()
+  await handler(request({ question: '推荐几篇技术与研究相关的文章' }), res)
+  expect(res.json.mock.calls[0][0]).toMatchObject({
+    kind: 'recommendation',
+    sources: [
+      expect.objectContaining({
+        title: 'OCR 阅读笔记',
+        href: '/article/ocr-notes'
+      })
+    ]
+  })
+  expect(getChatIndex).not.toHaveBeenCalled()
+  expect(rewriteQueries).not.toHaveBeenCalled()
+  expect(answerFromPassages).not.toHaveBeenCalled()
 })

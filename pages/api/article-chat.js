@@ -1,6 +1,12 @@
 import { fetchGlobalAllData } from '@/lib/db/SiteDataApi'
 import { getChatModel } from '@/lib/chat/model'
 import {
+  guideIntent,
+  recommendPosts,
+  siteGuideReply,
+  SITE_PROFILE
+} from '@/lib/chat/siteGuide'
+import {
   acquireChatSlot,
   ChatError,
   checkChatOrigin,
@@ -46,6 +52,9 @@ export default async function handler(req, res) {
   try {
     const input = validateChatInput(req.body)
     release = acquireChatSlot(req)
+    const intent = guideIntent(input)
+    const guide = siteGuideReply(intent)
+    if (guide) return res.status(200).json(guide)
     const data = await fetchGlobalAllData({
       from: 'article-chat',
       requireAvailableData: true
@@ -57,7 +66,12 @@ export default async function handler(req, res) {
         ? catalog.get(input.postId.replace(/-/g, '').toLowerCase())
         : null
     if (input.scope === 'article' && !post)
-      throw new ChatError(404, '这篇文章不在公开问答范围内，请切换到全站文章。')
+      throw new ChatError(
+        404,
+        '这篇文章不在公开问答范围内，请切换到「逛逛整个博客」。'
+      )
+    const recommendations = recommendPosts(intent, catalog)
+    if (recommendations) return res.status(200).json(recommendations)
     const index = getChatIndex()
     const queries = await rewriteQueries(
       model,
@@ -71,10 +85,14 @@ export default async function handler(req, res) {
       post,
       input.question
     )
+    const context =
+      input.scope === 'site'
+        ? [...passages, { ...SITE_PROFILE, id: passages.length + 1 }]
+        : passages
     const answer = await answerFromPassages(
       model,
       { ...input, post },
-      passages,
+      context,
       controller.signal
     )
     return res.status(200).json(answer)

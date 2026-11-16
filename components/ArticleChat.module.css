@@ -30,33 +30,159 @@
   outline-offset: 3px;
 }
 .fab {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 9px;
-  margin-left: auto;
-  margin-right: 34px;
-  border: 1px solid #a99bce;
-  padding: 10px 17px;
-  border-radius: 25px;
-  background: #7563ab;
-  color: #fff;
-  box-shadow: 0 5px 22px #40365b25;
-  transition: background 0.2s;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border: 1px solid #ffffff90;
+  padding: 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 28% 18%,
+    #fff9,
+    #e5ddf945 66%,
+    #abcde44d
+  );
+  color: #e4d5ff;
+  box-shadow:
+    0 5px 24px #40365b23,
+    inset 0 0 15px #ffffff60;
+  transition:
+    transform 0.25s,
+    box-shadow 0.25s;
 }
-.fab:hover {
-  background: #665498;
+.fab:hover,
+.fab:focus-visible {
+  transform: translateY(-3px) scale(1.07);
+  box-shadow:
+    0 9px 30px #6b578d40,
+    inset 0 0 15px #ffffff80;
+}
+.launcher {
+  position: relative;
+  width: 72px;
+  margin-left: auto;
+  margin-right: 26px;
+}
+.planet {
+  position: relative;
+  display: block;
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
+}
+.planetSphere {
+  position: absolute;
+  inset: 14px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 27% 23%,
+    #eef7ff 0,
+    #bed6ed 22%,
+    #b4a4d8 57%,
+    #786499 100%
+  );
+  box-shadow:
+    inset -5px -5px 10px #65518645,
+    inset 2px 2px 5px #fff9;
+}
+.planetSphere::after {
+  content: '';
+  position: absolute;
+  inset: 12px -12px;
+  border-top: 6px solid #fff3;
+  border-bottom: 3px solid #e9dbff50;
+  transform: rotate(-25deg);
+}
+.planetOrbit {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  color: #efe1ff;
+  filter: drop-shadow(0 1px 2px #74618d50);
+  transition: transform 0.45s;
+}
+.fab:hover .planetOrbit {
+  transform: rotate(12deg);
+}
+.planetClose {
+  position: absolute;
+  right: -1px;
+  top: -1px;
+  display: grid;
+  place-items: center;
+  width: 23px;
+  height: 23px;
+  border: 1px solid var(--chat-line);
+  border-radius: 50%;
+  color: var(--chat-muted);
+  background: var(--chat-paper);
+  line-height: 1;
+}
+.hint {
+  position: absolute;
+  right: 84px;
+  bottom: 6px;
+  width: 176px;
+  padding: 11px 15px;
+  border: 1px solid var(--chat-line);
+  border-radius: 16px 16px 3px 16px;
+  background: var(--chat-paper);
+  box-shadow: 0 5px 24px #40365b18;
+  color: var(--chat-muted);
+  font-size: 12px;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateX(5px);
+  transition:
+    opacity 0.2s,
+    transform 0.2s,
+    visibility 0.2s;
+}
+.hint strong {
+  color: var(--chat-ink);
+  font-weight: 500;
+  font-size: 14px;
+}
+.launcher:has(.fab:focus-visible) .hint {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+}
+@media (hover: hover) {
+  .launcher:hover .hint {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0);
+  }
 }
 .panel {
   display: flex;
   flex-direction: column;
   width: min(406px, calc(100vw - 32px));
-  height: min(650px, calc(100dvh - 112px));
+  height: min(680px, calc(100dvh - 130px));
   margin-bottom: 13px;
   border: 1px solid var(--chat-line);
   border-radius: 20px;
   background: var(--chat-paper);
   box-shadow: 0 12px 65px #28233628;
   overflow: hidden;
+  animation: arrive 0.24s ease-out;
+}
+@keyframes arrive {
+  from {
+    opacity: 0;
+    transform: translateY(9px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 .header {
   display: flex;
@@ -75,6 +201,10 @@
   font-weight: 600;
   line-height: 1.5;
   color: var(--chat-ink);
+}
+.headerSpark {
+  color: var(--chat-accent);
+  font-weight: 400;
 }
 .close {
   border: 0;
@@ -131,15 +261,22 @@
   scrollbar-width: thin;
 }
 .welcome {
-  padding: 9px 1px;
+  padding: 0 1px 9px;
 }
-.book {
-  color: var(--chat-accent);
-  font-size: 28px;
+.welcomePlanet {
+  height: 50px;
+  margin: -2px 0 5px;
+}
+.welcomePlanet .planet {
+  transform: scale(0.7);
+  transform-origin: top left;
+}
+.welcomePlanet .planetOrbit {
+  color: #a796c4;
 }
 .welcome h3 {
-  margin: 3px 0 12px;
-  font-size: 24px;
+  margin: 0 0 9px;
+  font-size: 22px;
   font-weight: 500;
   line-height: 1.6;
   letter-spacing: 0.02em;
@@ -152,7 +289,62 @@
 .suggestions {
   display: grid;
   gap: 8px;
-  margin-top: 25px;
+  margin-top: 8px;
+}
+.interests {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 18px 0 17px;
+}
+.interests button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border: 1px solid var(--chat-line);
+  border-radius: 18px;
+  color: var(--chat-muted);
+  background: transparent;
+  font-size: 12px;
+  transition:
+    border-color 0.18s,
+    background 0.18s;
+}
+.interests button[aria-pressed='true'],
+.interests button:hover {
+  border-color: var(--chat-accent);
+  background: var(--chat-soft);
+  color: var(--chat-accent);
+}
+.suggestionHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+  color: var(--chat-muted);
+  font-size: 11px;
+}
+.suggestionHeading button,
+.revealAll {
+  padding: 3px 0;
+  border: 0;
+  background: transparent;
+  color: var(--chat-accent);
+  font-size: 11px;
+}
+.revealAll {
+  margin-top: 10px;
+}
+.cursor {
+  display: inline-block;
+  width: 3px;
+  height: 1em;
+  margin-left: 4px;
+  vertical-align: -1px;
+  border-radius: 2px;
+  background: var(--chat-accent);
+  animation: pulse 0.9s infinite;
 }
 .suggestions button {
   display: flex;
@@ -371,14 +563,54 @@
     bottom: calc(18px + env(safe-area-inset-bottom, 0px));
   }
   .panel {
-    height: min(640px, calc(100dvh - 105px));
+    height: min(680px, calc(100dvh - 118px));
+  }
+  .launcher {
+    margin-right: 20px;
+    width: 62px;
+  }
+  .fab {
+    width: 62px;
+    height: 62px;
+  }
+  .fab > .planet {
+    transform: scale(0.86);
+  }
+  .header {
+    padding-top: 15px;
+  }
+  .form textarea {
+    font-size: 16px;
+  }
+  .welcome h3 {
+    font-size: 21px;
+  }
+  .hint {
+    display: none;
+  }
+}
+@media (max-height: 600px) {
+  .widget {
+    bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  }
+  .panel {
+    height: calc(100dvh - 28px);
+    margin-bottom: 0;
+  }
+  .widget:has(.panel) .launcher {
+    display: none;
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .loading span {
+  .loading span,
+  .cursor,
+  .panel {
     animation: none;
   }
-  .fab {
+  .fab,
+  .planetOrbit,
+  .hint,
+  .interests button {
     transition: none;
   }
 }
