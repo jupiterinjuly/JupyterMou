@@ -2,6 +2,7 @@ import { siteConfig } from '@/lib/config'
 import { convertInnerUrl } from '@/lib/db/notion/convertInnerUrl'
 import { isBrowser, loadExternalResource } from '@/lib/utils'
 import dynamic from 'next/dynamic'
+import Script from 'next/script'
 import { useRouter } from 'next/router'
 import { useEffect, useMemo, useState } from 'react'
 import { GlobalStyle } from './GlobalStyle'
@@ -483,12 +484,14 @@ const ExternalPlugin = props => {
       {/* 谷歌统计 */}
       {ANALYTICS_GOOGLE_ID && (
         <>
-          <script
-            async
+          <Script
+            id='jupytermou-ga-loader'
+            strategy='afterInteractive'
             src={`https://www.googletagmanager.com/gtag/js?id=${ANALYTICS_GOOGLE_ID}`}
           />
-          <script
-            async
+          <Script
+            id='jupytermou-ga-config'
+            strategy='afterInteractive'
             dangerouslySetInnerHTML={{
               __html: `
                 window.dataLayer = window.dataLayer || [];

@@ -69,6 +69,22 @@ test('home chat asks, displays citations, fits viewport and handles Escape', asy
   ).toBeFocused()
 })
 
+test('home initializes analytics without a hydration recovery', async ({
+  page
+}) => {
+  const failures = []
+  page.on('pageerror', error => {
+    if (/Minified React error #(418|423)/.test(error.message))
+      failures.push(error.message)
+  })
+  await page.goto('/', { waitUntil: 'domcontentloaded' })
+  await expect(
+    page.getByRole('button', { name: '打开文章问答', exact: true })
+  ).toBeVisible()
+  await expect(page.locator('#theme-hexo')).toBeVisible()
+  expect(failures).toEqual([])
+})
+
 test('article scope resets on switch; throttling keeps question for retry', async ({
   page
 }) => {
