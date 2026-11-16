@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { checkStrIsNotionId, getLastPartOfUrl } from '@/lib/utils'
 import { idToUuid } from 'notion-utils'
 import BLOG from './blog.config'
+import { isNonCanonicalChatPath } from './lib/chat/requestPath'
 
 /**
  * Clerk 身份验证中间件
@@ -91,4 +92,22 @@ const authMiddleware = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
     })
   : noAuthMiddleware
 
-export default authMiddleware
+// Keep article Q&A on one path so localized aliases cannot evade the WAF rule.
+export default function middleware(
+  req: NextRequest,
+  ev: Parameters<typeof authMiddleware>[1]
+) {
+  if (isNonCanonicalChatPath(req.url)) {
+    return new NextResponse(
+      JSON.stringify({ error: '请使用本站的文章问答入口。' }),
+      {
+        status: 404,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'private, no-store'
+        }
+      }
+    )
+  }
+  return authMiddleware(req, ev)
+}

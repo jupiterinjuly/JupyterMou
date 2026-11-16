@@ -285,7 +285,13 @@ const ExternalPlugin = props => {
       {ENABLE_NPROGRSS && <LoadingProgress />}
       {pluginsIdle && <AosAnimation />}
       {ANALYTICS_51LA_ID && ANALYTICS_51LA_CK && <LA51 />}
-      {AI_CHAT_API || DOCS_CHAT_API ? <DocsChat /> : COZE_BOT_ID && <Coze />}
+      {process.env.NEXT_PUBLIC_ARTICLE_CHAT_ENABLED === 'true' ? (
+        <ArticleChat key={props.post?.id || 'site'} post={props.post} />
+      ) : AI_CHAT_API || DOCS_CHAT_API ? (
+        <DocsChat />
+      ) : (
+        COZE_BOT_ID && <Coze />
+      )}
 
       {ANALYTICS_51LA_ID && ANALYTICS_51LA_CK && (
         <>
@@ -466,7 +472,12 @@ const ExternalPlugin = props => {
 
       {/* UMAMI 统计 */}
       {UMAMI_ID && (
-        <script async defer src={UMAMI_HOST} data-website-id={UMAMI_ID}></script>
+        <script
+          async
+          defer
+          src={UMAMI_HOST}
+          data-website-id={UMAMI_ID}
+        ></script>
       )}
 
       {/* 谷歌统计 */}
@@ -581,6 +592,10 @@ const Coze = dynamic(() => import('@/components/Coze'), {
   ssr: false
 })
 const DocsChat = dynamic(() => import('@/components/DocsChat'), {
+  ssr: false
+})
+
+const ArticleChat = dynamic(() => import('@/components/ArticleChat'), {
   ssr: false
 })
 const LA51 = dynamic(() => import('@/components/LA51'), {

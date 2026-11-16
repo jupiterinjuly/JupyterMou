@@ -196,6 +196,9 @@ function getOutput() {
 
 const nextConfig = {
   outputFileTracingRoot: __dirname,
+  // Build-only Notion locks are created/deleted concurrently; they are not
+  // runtime assets and must not enter Vercel's function packaging trace.
+  outputFileTracingExcludes: { '*': ['./.notion-api-lock', './.env*'] },
   eslint: {
     ignoreDuringBuilds: true
   },

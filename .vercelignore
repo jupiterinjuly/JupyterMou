@@ -8,3 +8,5 @@ test-results
 cloudflare
 functions
 tools
+.notion-api-lock
+.env*
